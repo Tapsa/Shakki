@@ -19,6 +19,8 @@ import android.view.MenuItem;
 import android.widget.FrameLayout;
 
 public class MainActivity extends AppCompatActivity {
+    Position position;
+    Piece[][] board;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -49,7 +51,7 @@ public class MainActivity extends AppCompatActivity {
             int boardSide = Math.min(viewWidth, viewHeight);
             paint.setTextSize(boardSide * 0.1f);
 
-            if(event.getAction() == MotionEvent.ACTION_DOWN) {
+            if (event.getAction() == MotionEvent.ACTION_DOWN) {
                 if (surfaceHolder.getSurface().isValid()) {
                     Canvas canvas = surfaceHolder.lockCanvas();
                     canvas.drawColor(Color.BLACK);
@@ -104,14 +106,14 @@ public class MainActivity extends AppCompatActivity {
                     canvas.drawText("f", boardSide * 0.63f, boardSide * 0.225f, paint);
                     canvas.drawText("g", boardSide * 0.73f, boardSide * 0.225f, paint);
                     canvas.drawText("h", boardSide * 0.83f, boardSide * 0.225f, paint);
-                    canvas.drawText("1", boardSide * 0.03f, boardSide * 0.325f, paint);
-                    canvas.drawText("2", boardSide * 0.03f, boardSide * 0.425f, paint);
-                    canvas.drawText("3", boardSide * 0.03f, boardSide * 0.525f, paint);
-                    canvas.drawText("4", boardSide * 0.03f, boardSide * 0.625f, paint);
-                    canvas.drawText("5", boardSide * 0.03f, boardSide * 0.725f, paint);
-                    canvas.drawText("6", boardSide * 0.03f, boardSide * 0.825f, paint);
-                    canvas.drawText("7", boardSide * 0.03f, boardSide * 0.925f, paint);
-                    canvas.drawText("8", boardSide * 0.03f, boardSide * 1.025f, paint);
+                    canvas.drawText("8", boardSide * 0.03f, boardSide * 0.325f, paint);
+                    canvas.drawText("7", boardSide * 0.03f, boardSide * 0.425f, paint);
+                    canvas.drawText("6", boardSide * 0.03f, boardSide * 0.525f, paint);
+                    canvas.drawText("5", boardSide * 0.03f, boardSide * 0.625f, paint);
+                    canvas.drawText("4", boardSide * 0.03f, boardSide * 0.725f, paint);
+                    canvas.drawText("3", boardSide * 0.03f, boardSide * 0.825f, paint);
+                    canvas.drawText("2", boardSide * 0.03f, boardSide * 0.925f, paint);
+                    canvas.drawText("1", boardSide * 0.03f, boardSide * 1.025f, paint);
                     canvas.drawText("a", boardSide * 0.13f, boardSide * 1.125f, paint);
                     canvas.drawText("b", boardSide * 0.23f, boardSide * 1.125f, paint);
                     canvas.drawText("c", boardSide * 0.33f, boardSide * 1.125f, paint);
@@ -120,14 +122,27 @@ public class MainActivity extends AppCompatActivity {
                     canvas.drawText("f", boardSide * 0.63f, boardSide * 1.125f, paint);
                     canvas.drawText("g", boardSide * 0.73f, boardSide * 1.125f, paint);
                     canvas.drawText("h", boardSide * 0.83f, boardSide * 1.125f, paint);
-                    canvas.drawText("1", boardSide * 0.93f, boardSide * 0.325f, paint);
-                    canvas.drawText("2", boardSide * 0.93f, boardSide * 0.425f, paint);
-                    canvas.drawText("3", boardSide * 0.93f, boardSide * 0.525f, paint);
-                    canvas.drawText("4", boardSide * 0.93f, boardSide * 0.625f, paint);
-                    canvas.drawText("5", boardSide * 0.93f, boardSide * 0.725f, paint);
-                    canvas.drawText("6", boardSide * 0.93f, boardSide * 0.825f, paint);
-                    canvas.drawText("7", boardSide * 0.93f, boardSide * 0.925f, paint);
-                    canvas.drawText("8", boardSide * 0.93f, boardSide * 1.025f, paint);
+                    canvas.drawText("8", boardSide * 0.93f, boardSide * 0.325f, paint);
+                    canvas.drawText("7", boardSide * 0.93f, boardSide * 0.425f, paint);
+                    canvas.drawText("6", boardSide * 0.93f, boardSide * 0.525f, paint);
+                    canvas.drawText("5", boardSide * 0.93f, boardSide * 0.625f, paint);
+                    canvas.drawText("4", boardSide * 0.93f, boardSide * 0.725f, paint);
+                    canvas.drawText("3", boardSide * 0.93f, boardSide * 0.825f, paint);
+                    canvas.drawText("2", boardSide * 0.93f, boardSide * 0.925f, paint);
+                    canvas.drawText("1", boardSide * 0.93f, boardSide * 1.025f, paint);
+                    board = position.getBoard();
+                    for (int row = 0; row < 8; ++row) {
+                        for (int col = 0; col < 8; ++col) {
+                            if (null != board[row][col]) {
+                                if (board[row][col].owner == Owner.BLACK)
+                                    paint.setColor(Color.BLACK);
+                                else
+                                    paint.setColor(Color.BLUE);
+                                int imgrow = row - 7;
+                                canvas.drawText(board[row][col].debugPrint(), boardSide * ((col * 0.1f + 0.03f) + 0.1f), boardSide * ((-imgrow * 0.1f + 0.025f) + 0.3f), paint);
+                            }
+                        }
+                    }
 
                     // Paint the touch point
                     paint.setColor(Color.RED);
@@ -166,7 +181,9 @@ public class MainActivity extends AppCompatActivity {
         super.onStart();
 
         // Do whatever you want when the app launches
-        //SurfaceView board = (SurfaceView) findViewById(R.id.surfaceView);
+        position = new Position();
+        position.start();
+        Move move = new Move();
+        boolean cheat = false, moved;
     }
-
 }
