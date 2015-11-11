@@ -147,6 +147,11 @@ public class MainActivity extends AppCompatActivity {
                     // Paint the touch point
                     paint.setColor(Color.RED);
                     canvas.drawCircle(event.getX(), event.getY(), boardSide * 0.02f, paint);
+                    float leftedge = boardSide * 0.1f;
+                    float topedge = boardSide * 0.25f;
+                    int xfile = (int)((event.getX() - leftedge) / boardSide * 10);
+                    int yrank = -(int)((event.getY() - topedge) / boardSide * 10 - 8);
+                    canvas.drawText("X: " + xfile + ", Y: " + yrank, 10, boardSide * 1.25f, paint);
                     surfaceHolder.unlockCanvasAndPost(canvas);
                 }
             }
