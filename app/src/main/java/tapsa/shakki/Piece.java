@@ -10,6 +10,13 @@ public class Piece {
     public File col;
     public Rank row;
 
+    public Piece(Piece p) {
+        owner = p.owner;
+        who = p.who;
+        row = p.row;
+        col = p.col;
+    }
+
     public Piece(Owner o, Who w, Rank r, File c) {
         owner = o;
         who = w;

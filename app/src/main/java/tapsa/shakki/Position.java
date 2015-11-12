@@ -10,6 +10,7 @@ import java.util.List;
 import java.util.ListIterator;
 import java.util.Map;
 import java.util.Random;
+import java.util.TreeSet;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ConcurrentNavigableMap;
 import java.util.concurrent.ConcurrentSkipListMap;
@@ -36,8 +37,26 @@ public class Position {
     public Position() {
     }
 
-    public Position(Position p) {
-        copyPosition(p);
+    public Position(Position pos) {
+        clear();
+
+        for (Piece p : pos.whitePieces) {
+            Piece newP = new Piece(p);
+            whitePieces.add(newP);
+            board[p.row.ordinal()][p.col.ordinal()] = newP;
+        }
+
+        for (Piece p : pos.blackPieces) {
+            Piece newP = new Piece(p);
+            blackPieces.add(newP);
+            board[p.row.ordinal()][p.col.ordinal()] = new Piece(p);
+        }
+
+        whoseTurn = pos.whoseTurn;
+        canCastle = pos.canCastle;
+        passer = (null != pos.passer) ? board[pos.passer.row.ordinal()][pos.passer.col.ordinal()] : null;
+        movesDone = pos.movesDone;
+        lastEatMove = pos.lastEatMove;
     }
 
     public String showSpecialInfo() {
@@ -120,26 +139,6 @@ public class Position {
         movesDone = lastEatMove = 0;
     }
 
-    public void copyPosition(Position pos) {
-        clear();
-
-        whitePieces = pos.whitePieces;
-        for (Piece p : whitePieces) {
-            board[p.row.ordinal()][p.col.ordinal()] = p;
-        }
-
-        blackPieces = pos.blackPieces;
-        for (Piece p : blackPieces) {
-            board[p.row.ordinal()][p.col.ordinal()] = p;
-        }
-
-        whoseTurn = pos.whoseTurn;
-        canCastle = pos.canCastle;
-        passer = (null != pos.passer) ? board[pos.passer.row.ordinal()][pos.passer.col.ordinal()] : null;
-        movesDone = pos.movesDone;
-        lastEatMove = pos.lastEatMove;
-    }
-
     public String printColRow(File col, Rank row) {
         return " " + (char) (col.ordinal() + 97) + (row.ordinal() + 1);
     }
@@ -147,7 +146,7 @@ public class Position {
     // For checking any square.
     // Returns true if a piece is found.
     private boolean moveCheck(Piece p, List<Move> m, int fC, int fR, int tC, int tR) {
-        if (null != p) {
+        if (null == p) {
             // Legal move!
             m.add(new Move(fC, fR, tC, tR));
             // Continue checking for moves.
@@ -181,7 +180,7 @@ public class Position {
     }
 
     private boolean threatenCheck(Piece p, IntRef threats, Who secondPieceType, Piece t) {
-        if (null != p) return false;
+        if (null == p) return false;
         if (p.owner != whoseTurn && (p.who == Who.QUEEN || p.who == secondPieceType)) {
             t = p;
             ++threats.value;
@@ -197,7 +196,7 @@ public class Position {
     private boolean threatenCheck(Piece p, IntRef threats, Who secondPieceType) {
         // No piece, no threat.
         // Continue checking.
-        if (null != p) return false;
+        if (null == p) return false;
         // Our piece, no threat.
         // Is it queen or rook/bishop = is the king threatened?
         if (p.owner != whoseTurn && (p.who == Who.QUEEN || p.who == secondPieceType)) {
@@ -726,7 +725,7 @@ public class Position {
         }
     }
 
-    public int generateLegalMoves(List<Move> moves, MutableInt result) {
+    public int generateLegalMoves(List<Move> moves, IntRef result) {
         // • Käydään läpi vuorossa olevan pelaajan nappulat.
         // • Ensimmäisenä on aina kuningas.
         // • Tarkistetaan uhkaako vihollisen nappulat kuningasta.
@@ -1283,7 +1282,7 @@ public class Position {
 
     private int negamax(Position pos, int depth, int a, int b, int color) {
         List<Move> moves = new LinkedList<Move>();
-        MutableInt result = new MutableInt(0);
+        IntRef result = new IntRef();
         int moveCount = pos.generateLegalMoves(moves, result);
         if (moveCount == 0) {
             // Peli päättynyt
@@ -1309,7 +1308,27 @@ public class Position {
         return a;
     }
 
-    private void minmax(Move m, ConcurrentNavigableMap<Integer, Move> values, int color) {
+    class MultimapWorkaround implements Comparable {
+        Integer value;
+        Move move;
+
+        public MultimapWorkaround(int val, Move m) {
+            value = val;
+            move = m;
+        }
+
+        @Override
+        public int compareTo(Object another) {
+            MultimapWorkaround other = (MultimapWorkaround) another;
+            int equals = value - other.value;
+            if (equals == 0) {
+                equals = move.hashCode() - other.hashCode();
+            }
+            return equals;
+        }
+    }
+
+    private void minmax(Move m, TreeSet<MultimapWorkaround> values, int color) {
         Position p = new Position(this);
         p.executeMove(m);
         p.changeTurn();
@@ -1318,16 +1337,17 @@ public class Position {
         // Suurenna kun napit vähenee runsaasti?
         int value = color * negamax(p, 3, -30000, 30000, color);
         synchronized (this) {
-            values.put(value, m);
+            System.out.println("Similar value added");
+            values.add(new MultimapWorkaround(value, m));
         }
     }
 
     class MinMaxThread extends Thread {
         Move move;
-        ConcurrentNavigableMap<Integer, Move> values;
+        TreeSet<MultimapWorkaround> values;
         int color;
 
-        MinMaxThread(Move m, ConcurrentNavigableMap<Integer, Move> vals, int colour) {
+        MinMaxThread(Move m, TreeSet<MultimapWorkaround> vals, int colour) {
             move = m;
             values = vals;
             color = colour;
@@ -1341,23 +1361,26 @@ public class Position {
     public Move selectBestMove(List<Move> moves) {
         //cout << "AI negamax:" << endl;
         List<Thread> threads = new LinkedList<Thread>();
-        ConcurrentNavigableMap<Integer, Move> values = new ConcurrentSkipListMap<Integer, Move>();
+        TreeSet<MultimapWorkaround> values = new TreeSet<MultimapWorkaround>();
         long time1 = System.currentTimeMillis();
         int color = (whoseTurn == Owner.WHITE) ? -1 : 1;
         for (Move m : moves) {
-            threads.add(new MinMaxThread(m, values, color));
+            MinMaxThread thread = new MinMaxThread(m, values, color);
+            thread.run();
+            threads.add(thread);
         }
         for (Thread t : threads) {
-            boolean done = false;
-            while (!done) {
+            boolean working = true;
+            while (working) {
                 try {
                     t.join();
-                    done = true;
+                    working = false;
                 } catch (InterruptedException e) {
                     e.printStackTrace();
                 }
             }
         }
+        System.out.println("Similar values: " + values.size() + " pcs");
 
         long time2 = System.currentTimeMillis();
         System.out.println("Time elapsed: " + (time2 - time1) + " s");
@@ -1365,17 +1388,17 @@ public class Position {
         Random rand = new Random();
         rand.setSeed(time2);
         if (whoseTurn == Owner.WHITE) {
-            for (Map.Entry<Integer, Move> i : values.descendingMap().entrySet()) {
-                if (i.getKey() - values.lastKey() > -5)
-                    sameValues.add(i.getValue());
+            for (MultimapWorkaround i : values.descendingSet()) {
+                if (i.value - values.last().value > -5)
+                    sameValues.add(i.move);
             }
         } else {
-            for (Map.Entry<Integer, Move> i : values.entrySet()) {
-                if (i.getKey() - values.firstKey() < 5)
-                    sameValues.add(i.getValue());
+            for (MultimapWorkaround i : values) {
+                if (i.value - values.first().value < 5)
+                    sameValues.add(i.move);
             }
         }
-        int pick = rand.nextInt() % sameValues.size();
+        int pick = rand.nextInt(sameValues.size());
         //cout << pick << " : " << sameValues.size() << endl;
         return sameValues.get(pick);
     }
@@ -1497,47 +1520,6 @@ public class Position {
     public void changeTurn() {
         // Turn changes.
         whoseTurn = (whoseTurn == Owner.WHITE) ? Owner.BLACK : Owner.WHITE;
-    }
-
-    public void showPosition() // Debug print.
-    {
-        boolean turn = true;
-        //cout << "\n    a  b  c  d  e  f  g  h" << endl;
-        for (short i = 8; i-- > 0; ) {
-            //cout << " " << (i + 1) << " ";
-            for (Piece p : board[i]) {
-                if (null == p) {
-                    /*if(turn)
-                        cout << blackYellow;
-                    else
-                        cout << blackGold;
-                    cout << "   ";*/
-                    turn = !turn;
-                    continue;
-                }
-                /*if(turn)
-                {
-                    if(p.owner == Owner.BLACK)
-                        cout << blackYellow;
-                    else
-                        cout << whiteYellow;
-                }
-                else
-                {
-                    if(p.owner == BLACK)
-                        cout << blackGold;
-                    else
-                        cout << whiteGold;
-                }*/
-                turn = !turn;
-                //cout << " ";
-                p.debugPrint();
-                //cout << " ";
-            }
-            turn = !turn;
-            //cout << greyBlack << " " << (i + 1) << endl;
-        }
-        //cout << "    a  b  c  d  e  f  g  h" << endl;
     }
 
     public Piece[][] getBoard() {
