@@ -799,7 +799,7 @@ public class Position {
 
         // Uhataanko?
         if (isKingThreatened(king.col.ordinal(), king.row.ordinal(), threatener)) {
-            //cout << "Check!" << endl;
+            System.out.println("Check!");
             //result = (whoseTurn == WHITE) ? -1000 : 1000;
 
             // Jos vain yksi vihollinen uhkaa, tarkista voiko laittaa eteen nappeja.
@@ -1337,7 +1337,6 @@ public class Position {
         // Suurenna kun napit vähenee runsaasti?
         int value = color * negamax(p, 3, -30000, 30000, color);
         synchronized (this) {
-            System.out.println("Similar value added");
             values.add(new MultimapWorkaround(value, m));
         }
     }
@@ -1359,7 +1358,7 @@ public class Position {
     }
 
     public Move selectBestMove(List<Move> moves) {
-        //cout << "AI negamax:" << endl;
+        System.out.println("AI negamax:");
         List<Thread> threads = new LinkedList<Thread>();
         TreeSet<MultimapWorkaround> values = new TreeSet<MultimapWorkaround>();
         long time1 = System.currentTimeMillis();
@@ -1380,7 +1379,6 @@ public class Position {
                 }
             }
         }
-        System.out.println("Similar values: " + values.size() + " pcs");
 
         long time2 = System.currentTimeMillis();
         System.out.println("Time elapsed: " + (time2 - time1) + " s");
@@ -1399,7 +1397,7 @@ public class Position {
             }
         }
         int pick = rand.nextInt(sameValues.size());
-        //cout << pick << " : " << sameValues.size() << endl;
+        System.out.println(pick + " : " + sameValues.size());
         return sameValues.get(pick);
     }
 
@@ -1489,11 +1487,10 @@ public class Position {
         // Has to be pawn.
         if (m.special >= 3) {
             if (m.special == 3) {
-                //cout << "En passant appeared!" << endl;
                 passer = from;
                 return;
             }
-            //cout << "Deleting en passant... ";
+            System.out.println("Deleting en passant... ");
             List<Piece> list = (from.owner == Owner.WHITE) ? blackPieces : whitePieces;
             if (list.remove(passer))
                 board[passer.row.ordinal()][passer.col.ordinal()] = null; // Will this work?
