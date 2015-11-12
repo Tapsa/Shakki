@@ -358,16 +358,15 @@ public class MainActivity extends AppCompatActivity {
         public void run() {
             boolean moved = false;
             if (position.isDraw()) {
-                // cout << "DRAW!" << endl;
+                System.out.println("DRAW");
                 return;
             }
             moves = new LinkedList<Move>();
             IntRef result = new IntRef();
-            // cout << "Legal moves: " <<
-            position.generateLegalMoves(moves, result);
-            //if(result.value != 0) cout << "Check!" << endl;
+            System.out.println("Legal moves: " + position.generateLegalMoves(moves, result));
+            if (result.value != 0) System.out.println("Check!");
             if (moves.isEmpty()) {
-                //cout << "GAME ENDED!" << endl;
+                System.out.println("GAME ENDED");
                 return;
             }
             position.showSpecialInfo();
