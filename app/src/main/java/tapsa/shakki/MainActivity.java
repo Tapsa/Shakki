@@ -47,11 +47,12 @@ public class MainActivity extends AppCompatActivity {
     }
 
     class DrawingView extends SurfaceView implements SurfaceHolder.Callback {
-
         private final SurfaceHolder surfaceHolder;
         private final Paint paint = new Paint(Paint.ANTI_ALIAS_FLAG);
         private int boardSide, viewWidth, viewHeight;
         private int[] lines;
+        private DrawerThread thread = null;
+        private String message = "";
 
         public DrawingView(Context context) {
             super(context);
@@ -61,6 +62,28 @@ public class MainActivity extends AppCompatActivity {
             surf = this;
         }
 
+        public void startGraphics() {
+            if (null == thread) {
+                thread = new DrawerThread();
+                thread.startDrawing();
+            }
+        }
+
+        public void stopGraphics() {
+            if (null != thread) {
+                thread.stopDrawing();
+                boolean alive = true;
+                while (alive) {
+                    try {
+                        thread.join();
+                        alive = false;
+                    } catch (InterruptedException e) {
+                    }
+                }
+                thread = null;
+            }
+        }
+
         @Override
         protected void onDraw(Canvas canvas) {
             updateBoard(canvas);
@@ -68,6 +91,7 @@ public class MainActivity extends AppCompatActivity {
 
         @Override
         public void surfaceCreated(SurfaceHolder holder) {
+            startGraphics();
         }
 
         @Override
@@ -103,6 +127,44 @@ public class MainActivity extends AppCompatActivity {
 
         @Override
         public void surfaceDestroyed(SurfaceHolder holder) {
+            stopGraphics();
+        }
+
+        class DrawerThread extends Thread {
+            private boolean running = false;
+
+            public DrawerThread() {
+            }
+
+            public void startDrawing() {
+                running = true;
+                super.start();
+            }
+
+            public void stopDrawing() {
+                running = false;
+            }
+
+            public void run() {
+                Canvas canvas;
+                while (running) {
+                    canvas = null;
+                    try {
+                        canvas = surfaceHolder.lockCanvas();
+                        synchronized (surfaceHolder) {
+                            if (null != canvas) {
+                                updateBoard(canvas);
+                            }
+                        }
+                        sleep(200);
+                    } catch (InterruptedException ie) {
+                    } finally {
+                        if (null != canvas) {
+                            surfaceHolder.unlockCanvasAndPost(canvas);
+                        }
+                    }
+                }
+            }
         }
 
         protected void updateBoard(Canvas canvas) {
@@ -111,6 +173,8 @@ public class MainActivity extends AppCompatActivity {
             paint.setColor(Color.RED);
             String turnText = (Owner.BLACK == position.tellTurn()) ? "AI's turn" : "Your turn";
             canvas.drawText(turnText, 10, lines[0], paint);
+            paint.setTextSize(boardSide * 0.08f);
+            canvas.drawText(message, 10, boardSide * 1.25f, paint);
 
             // Paint the chess board
             paint.setColor(Color.YELLOW);
@@ -207,7 +271,6 @@ public class MainActivity extends AppCompatActivity {
                 if (surfaceHolder.getSurface().isValid()) {
                     int xfile = (int) ((event.getX() - lines[0]) / boardSide * 10);
                     int yrank = -(int) ((event.getY() - lines[9]) / boardSide * 10 - 8);
-                    String message = "";
                     boolean moved = false;
 
                     if (Owner.WHITE == position.tellTurn()) {
@@ -238,8 +301,8 @@ public class MainActivity extends AppCompatActivity {
                                 }
                                 if (!legal) {
                                     message = "Illegal move!";
-                                    fromCol = 0xF;
                                 }
+                                fromCol = 0xF;
                             }
                         } else {
                             message = "Make a move like e2-e4";
@@ -249,9 +312,8 @@ public class MainActivity extends AppCompatActivity {
 
                     Canvas canvas = surfaceHolder.lockCanvas();
                     updateBoard(canvas);
-                    paint.setColor(Color.RED);
-                    canvas.drawText(message, 10, boardSide * 1.25f, paint);
                     // Paint the touch point
+                    paint.setColor(Color.RED);
                     canvas.drawCircle(event.getX(), event.getY(), boardSide * 0.02f, paint);
                     surfaceHolder.unlockCanvasAndPost(canvas);
 
