@@ -1,19 +1,11 @@
 package tapsa.shakki;
 
-import android.util.MutableInt;
-import android.util.MutableShort;
-
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.ListIterator;
-import java.util.Map;
 import java.util.Random;
 import java.util.TreeSet;
-import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.ConcurrentNavigableMap;
-import java.util.concurrent.ConcurrentSkipListMap;
 
 /**
  * Created by Tapsa on 11.11.2015.
@@ -49,7 +41,7 @@ public class Position {
         for (Piece p : pos.blackPieces) {
             Piece newP = new Piece(p);
             blackPieces.add(newP);
-            board[p.row.ordinal()][p.col.ordinal()] = new Piece(p);
+            board[p.row.ordinal()][p.col.ordinal()] = newP;
         }
 
         whoseTurn = pos.whoseTurn;
@@ -63,10 +55,6 @@ public class Position {
         String message = "Castling bits: " + canCastle + "\nEn Passer:";
         if (null != passer) message += printColRow(passer.col, passer.row);
         return message + "\n";
-    }
-
-    public Who whoIsOn(short col, short row) {
-        return board[row][col].who;
     }
 
     public boolean isDraw() {
@@ -219,7 +207,7 @@ public class Position {
 
     private boolean isProtectingKing(Piece p, Piece king, int tC, int tR) {
         int rowDiff = p.row.ordinal() - king.row.ordinal(), colDiff = p.col.ordinal() - king.col.ordinal();
-        Direction direction = calcDirection((short) rowDiff, (short) colDiff);
+        Direction direction = calcDirection(rowDiff, colDiff);
         // Nappi hetkeksi pois jotta nähdään suojaako se kuningasta.
         board[p.row.ordinal()][p.col.ordinal()] = null;
         // Otetaan myös nykyinen uhkaaja pois, koska se ei saa vaikuttaa tähän.
@@ -486,6 +474,7 @@ public class Position {
         // Useita uhkaajia.
         // Siispä ei ole mahdollista laittaa eteen mitään.
         if (threats.value > 1) threatener = null;
+        //if (threats.value == 1 && null == threatener) System.exit(17); <- Uncomment and fix!
         return threats.value != 0;
     }
 
@@ -552,6 +541,7 @@ public class Position {
     }
 
     private void checkOwnMovesToHere(List<Move> m, int tC, int tR, Piece king) {
+        //System.out.println("Checking if other pieces can protect the king");
         // Samanlainen tarkistus kuin uhkaamisista.
         // Tässä vaan tarkistetaan toisin päin.
         // Kuningasta jo suojaavia nappeja ei saa siirtää!
@@ -725,6 +715,125 @@ public class Position {
         }
     }
 
+    private void switchCaseFallThroughWorkaround1(List<Move> moves, int col, int row, Piece king) {
+        System.out.println("Queen, Rook, Bishop, can move to protect?");
+        // Tarkistetaan suora jono nappia kohti nappi mukaanlukien.
+        for (int r = row, c = col; r != king.row.ordinal() || c != king.col.ordinal(); ) {
+            // Kutsu funktiota joka tarkistaa voiko oman napin siirtää tähän kohtaan laudalla.
+            checkOwnMovesToHere(moves, c, r, king);
+
+            if (r > king.row.ordinal()) r--;
+            else if (r < king.row.ordinal()) r++;
+
+            if (c > king.col.ordinal()) c--;
+            else if (c < king.col.ordinal()) c++;
+        }
+    }
+
+    private void switchCaseFallThroughWorkaround2(Piece p, List<Move> moves) {
+        // Up
+        for (int r = p.row.ordinal() + 1; r < 8; r++) {
+            if (moveCheck(board[r][p.col.ordinal()], moves, p.col.ordinal(), p.row.ordinal(), p.col.ordinal(), r))
+                break;
+        }
+        // Down
+        for (int r = p.row.ordinal() - 1; r >= 0; r--) {
+            if (moveCheck(board[r][p.col.ordinal()], moves, p.col.ordinal(), p.row.ordinal(), p.col.ordinal(), r))
+                break;
+        }
+    }
+
+    private void switchCaseFallThroughWorkaround3(Piece p, List<Move> moves) {
+        // Up-right
+        for (int r = p.row.ordinal() + 1, c = p.col.ordinal() + 1; r < 8 && c < 8; r++, c++) {
+            if (moveCheck(board[r][c], moves, p.col.ordinal(), p.row.ordinal(), c, r))
+                break;
+        }
+        // Down-left
+        for (int r = p.row.ordinal() - 1, c = p.col.ordinal() - 1; r >= 0 && c >= 0; r--, c--) {
+            if (moveCheck(board[r][c], moves, p.col.ordinal(), p.row.ordinal(), c, r))
+                break;
+        }
+    }
+
+    private void switchCaseFallThroughWorkaround4(Piece p, List<Move> moves) {
+        // Right
+        for (int c = p.col.ordinal() + 1; c < 8; c++) {
+            if (moveCheck(board[p.row.ordinal()][c], moves, p.col.ordinal(), p.row.ordinal(), c, p.row.ordinal()))
+                break;
+        }
+        // Left
+        for (int c = p.col.ordinal() - 1; c >= 0; c--) {
+            if (moveCheck(board[p.row.ordinal()][c], moves, p.col.ordinal(), p.row.ordinal(), c, p.row.ordinal()))
+                break;
+        }
+    }
+
+    private void switchCaseFallThroughWorkaround5(Piece p, List<Move> moves) {
+        // Right-down
+        for (int r = p.row.ordinal() - 1, c = p.col.ordinal() + 1; r >= 0 && c < 8; r--, c++) {
+            if (moveCheck(board[r][c], moves, p.col.ordinal(), p.row.ordinal(), c, r))
+                break;
+        }
+        // Left-up
+        for (int r = p.row.ordinal() + 1, c = p.col.ordinal() - 1; r < 8 && c >= 0; r++, c--) {
+            if (moveCheck(board[r][c], moves, p.col.ordinal(), p.row.ordinal(), c, r))
+                break;
+        }
+    }
+
+    private void switchCaseFallThroughWorkaround6(Piece p, List<Move> moves) {
+        // Up
+        for (int r = p.row.ordinal() + 1; r < 8; r++) {
+            if (moveCheck(board[r][p.col.ordinal()], moves, p.col.ordinal(), p.row.ordinal(), p.col.ordinal(), r))
+                break;
+        }
+        // Down
+        for (int r = p.row.ordinal() - 1; r >= 0; r--) {
+            if (moveCheck(board[r][p.col.ordinal()], moves, p.col.ordinal(), p.row.ordinal(), p.col.ordinal(), r))
+                break;
+        }
+    }
+
+    private void switchCaseFallThroughWorkaround7(Piece p, List<Move> moves) {
+        // Right
+        for (int c = p.col.ordinal() + 1; c < 8; c++) {
+            if (moveCheck(board[p.row.ordinal()][c], moves, p.col.ordinal(), p.row.ordinal(), c, p.row.ordinal()))
+                break;
+        }
+        // Left
+        for (int c = p.col.ordinal() - 1; c >= 0; c--) {
+            if (moveCheck(board[p.row.ordinal()][c], moves, p.col.ordinal(), p.row.ordinal(), c, p.row.ordinal()))
+                break;
+        }
+    }
+
+    private void switchCaseFallThroughWorkaround8(Piece p, List<Move> moves) {
+        // Up-right
+        for (int r = p.row.ordinal() + 1, c = p.col.ordinal() + 1; r < 8 && c < 8; r++, c++) {
+            if (moveCheck(board[r][c], moves, p.col.ordinal(), p.row.ordinal(), c, r))
+                break;
+        }
+        // Down-left
+        for (int r = p.row.ordinal() - 1, c = p.col.ordinal() - 1; r >= 0 && c >= 0; r--, c--) {
+            if (moveCheck(board[r][c], moves, p.col.ordinal(), p.row.ordinal(), c, r))
+                break;
+        }
+    }
+
+    private void switchCaseFallThroughWorkaround9(Piece p, List<Move> moves) {
+        // Right-down
+        for (int r = p.row.ordinal() - 1, c = p.col.ordinal() + 1; r >= 0 && c < 8; r--, c++) {
+            if (moveCheck(board[r][c], moves, p.col.ordinal(), p.row.ordinal(), c, r))
+                break;
+        }
+        // Left-up
+        for (int r = p.row.ordinal() + 1, c = p.col.ordinal() - 1; r < 8 && c >= 0; r++, c--) {
+            if (moveCheck(board[r][c], moves, p.col.ordinal(), p.row.ordinal(), c, r))
+                break;
+        }
+    }
+
     public int generateLegalMoves(List<Move> moves, IntRef result) {
         // • Käydään läpi vuorossa olevan pelaajan nappulat.
         // • Ensimmäisenä on aina kuningas.
@@ -799,33 +908,25 @@ public class Position {
 
         // Uhataanko?
         if (isKingThreatened(king.col.ordinal(), king.row.ordinal(), threatener)) {
-            System.out.println("Check!");
             //result = (whoseTurn == WHITE) ? -1000 : 1000;
-
             // Jos vain yksi vihollinen uhkaa, tarkista voiko laittaa eteen nappeja.
             // Tämä on totta vain jos kuningasta uhataan.
             if (null != threatener) {
+                //System.out.println("Can we block threat to king?");
                 // Tarkista pelkästään voiko tähän väliin laittaa nappeja.
                 // TEE OMA FUNKTIO JOSSA TARKISTETAAN VOIKO OMAN LAITTAA RUUTUUN!
                 // Vihollistyypin perusteella katsotaan mitä ruutuja tarkistetaan!
                 int row = threatener.row.ordinal(), col = threatener.col.ordinal();
                 switch (threatener.who) {
                     case QUEEN:
+                        switchCaseFallThroughWorkaround1(moves, col, row, king);
+                        break;
                     case ROOK:
-                    case BISHOP: {
-                        // Tarkistetaan suora jono nappia kohti nappi mukaanlukien.
-                        for (int r = row, c = col; r != king.row.ordinal() || c != king.col.ordinal(); ) {
-                            // Kutsu funktiota joka tarkistaa voiko oman napin siirtää tähän kohtaan laudalla.
-                            checkOwnMovesToHere(moves, c, r, king);
-
-                            if (r > king.row.ordinal()) r--;
-                            else if (r < king.row.ordinal()) r++;
-
-                            if (c > king.col.ordinal()) c--;
-                            else if (c < king.col.ordinal()) c++;
-                        }
-                    }
-                    break;
+                        switchCaseFallThroughWorkaround1(moves, col, row, king);
+                        break;
+                    case BISHOP:
+                        switchCaseFallThroughWorkaround1(moves, col, row, king);
+                        break;
                     case KNIGHT:
                         // Voiko hevosen syödä?
                         // Kutsu funktiota joka tarkistaa voiko oman napin siirtää tähän kohtaan laudalla.
@@ -878,56 +979,28 @@ public class Position {
                             case QUEEN: {
                                 switch (direction) {
                                     case NORTH:
+                                        switchCaseFallThroughWorkaround2(p, moves);
+                                        break;
                                     case SOUTH:
-                                        // Up
-                                        for (int r = p.row.ordinal() + 1; r < 8; r++) {
-                                            if (moveCheck(board[r][p.col.ordinal()], moves, p.col.ordinal(), p.row.ordinal(), p.col.ordinal(), r))
-                                                break;
-                                        }
-                                        // Down
-                                        for (int r = p.row.ordinal() - 1; r >= 0; r--) {
-                                            if (moveCheck(board[r][p.col.ordinal()], moves, p.col.ordinal(), p.row.ordinal(), p.col.ordinal(), r))
-                                                break;
-                                        }
+                                        switchCaseFallThroughWorkaround2(p, moves);
                                         break;
                                     case NORTHEAST:
+                                        switchCaseFallThroughWorkaround3(p, moves);
+                                        break;
                                     case SOUTHWEST:
-                                        // Up-right
-                                        for (int r = p.row.ordinal() + 1, c = p.col.ordinal() + 1; r < 8 && c < 8; r++, c++) {
-                                            if (moveCheck(board[r][c], moves, p.col.ordinal(), p.row.ordinal(), c, r))
-                                                break;
-                                        }
-                                        // Down-left
-                                        for (int r = p.row.ordinal() - 1, c = p.col.ordinal() - 1; r >= 0 && c >= 0; r--, c--) {
-                                            if (moveCheck(board[r][c], moves, p.col.ordinal(), p.row.ordinal(), c, r))
-                                                break;
-                                        }
+                                        switchCaseFallThroughWorkaround3(p, moves);
                                         break;
                                     case EAST:
+                                        switchCaseFallThroughWorkaround4(p, moves);
+                                        break;
                                     case WEST:
-                                        // Right
-                                        for (int c = p.col.ordinal() + 1; c < 8; c++) {
-                                            if (moveCheck(board[p.row.ordinal()][c], moves, p.col.ordinal(), p.row.ordinal(), c, p.row.ordinal()))
-                                                break;
-                                        }
-                                        // Left
-                                        for (int c = p.col.ordinal() - 1; c >= 0; c--) {
-                                            if (moveCheck(board[p.row.ordinal()][c], moves, p.col.ordinal(), p.row.ordinal(), c, p.row.ordinal()))
-                                                break;
-                                        }
+                                        switchCaseFallThroughWorkaround4(p, moves);
                                         break;
                                     case SOUTHEAST:
+                                        switchCaseFallThroughWorkaround5(p, moves);
+                                        break;
                                     case NORTHWEST:
-                                        // Right-down
-                                        for (int r = p.row.ordinal() - 1, c = p.col.ordinal() + 1; r >= 0 && c < 8; r--, c++) {
-                                            if (moveCheck(board[r][c], moves, p.col.ordinal(), p.row.ordinal(), c, r))
-                                                break;
-                                        }
-                                        // Left-up
-                                        for (int r = p.row.ordinal() + 1, c = p.col.ordinal() - 1; r < 8 && c >= 0; r++, c--) {
-                                            if (moveCheck(board[r][c], moves, p.col.ordinal(), p.row.ordinal(), c, r))
-                                                break;
-                                        }
+                                        switchCaseFallThroughWorkaround5(p, moves);
                                         break;
                                 }
                             }
@@ -935,30 +1008,16 @@ public class Position {
                             case ROOK: {
                                 switch (direction) {
                                     case NORTH:
+                                        switchCaseFallThroughWorkaround6(p, moves);
+                                        break;
                                     case SOUTH:
-                                        // Up
-                                        for (int r = p.row.ordinal() + 1; r < 8; r++) {
-                                            if (moveCheck(board[r][p.col.ordinal()], moves, p.col.ordinal(), p.row.ordinal(), p.col.ordinal(), r))
-                                                break;
-                                        }
-                                        // Down
-                                        for (int r = p.row.ordinal() - 1; r >= 0; r--) {
-                                            if (moveCheck(board[r][p.col.ordinal()], moves, p.col.ordinal(), p.row.ordinal(), p.col.ordinal(), r))
-                                                break;
-                                        }
+                                        switchCaseFallThroughWorkaround6(p, moves);
                                         break;
                                     case EAST:
+                                        switchCaseFallThroughWorkaround7(p, moves);
+                                        break;
                                     case WEST:
-                                        // Right
-                                        for (int c = p.col.ordinal() + 1; c < 8; c++) {
-                                            if (moveCheck(board[p.row.ordinal()][c], moves, p.col.ordinal(), p.row.ordinal(), c, p.row.ordinal()))
-                                                break;
-                                        }
-                                        // Left
-                                        for (int c = p.col.ordinal() - 1; c >= 0; c--) {
-                                            if (moveCheck(board[p.row.ordinal()][c], moves, p.col.ordinal(), p.row.ordinal(), c, p.row.ordinal()))
-                                                break;
-                                        }
+                                        switchCaseFallThroughWorkaround7(p, moves);
                                         break;
                                 }
                             }
@@ -966,30 +1025,16 @@ public class Position {
                             case BISHOP: {
                                 switch (direction) {
                                     case NORTHEAST:
+                                        switchCaseFallThroughWorkaround8(p, moves);
+                                        break;
                                     case SOUTHWEST:
-                                        // Up-right
-                                        for (int r = p.row.ordinal() + 1, c = p.col.ordinal() + 1; r < 8 && c < 8; r++, c++) {
-                                            if (moveCheck(board[r][c], moves, p.col.ordinal(), p.row.ordinal(), c, r))
-                                                break;
-                                        }
-                                        // Down-left
-                                        for (int r = p.row.ordinal() - 1, c = p.col.ordinal() - 1; r >= 0 && c >= 0; r--, c--) {
-                                            if (moveCheck(board[r][c], moves, p.col.ordinal(), p.row.ordinal(), c, r))
-                                                break;
-                                        }
+                                        switchCaseFallThroughWorkaround8(p, moves);
                                         break;
                                     case SOUTHEAST:
+                                        switchCaseFallThroughWorkaround9(p, moves);
+                                        break;
                                     case NORTHWEST:
-                                        // Right-down
-                                        for (int r = p.row.ordinal() - 1, c = p.col.ordinal() + 1; r >= 0 && c < 8; r--, c++) {
-                                            if (moveCheck(board[r][c], moves, p.col.ordinal(), p.row.ordinal(), c, r))
-                                                break;
-                                        }
-                                        // Left-up
-                                        for (int r = p.row.ordinal() + 1, c = p.col.ordinal() - 1; r < 8 && c >= 0; r++, c--) {
-                                            if (moveCheck(board[r][c], moves, p.col.ordinal(), p.row.ordinal(), c, r))
-                                                break;
-                                        }
+                                        switchCaseFallThroughWorkaround9(p, moves);
                                         break;
                                 }
                             }
@@ -1219,14 +1264,16 @@ public class Position {
         return moves.size();
     }
 
+    private static int negamaxed, piecesEaten;
+
     public int evaluate(int moveCount) {
         // Kertoimet
-        short c1 = 20, c2 = 10, c4 = 1, c5 = 7;
+        int c1 = 20, c2 = 10, c4 = 1, c5 = 7;
 
         // Normal: 78, max: 206
-        short value[] = {0, 18, 10, 6, 6, 2};
+        int value[] = {0, 18, 10, 6, 6, 2};
         // Max: 48
-        short center[][] = {
+        int center[][] = {
                 {1, 1, 1, 1, 1, 1, 1, 1},
                 {1, 2, 2, 2, 2, 2, 2, 1},
                 {1, 2, 3, 3, 3, 3, 2, 1},
@@ -1237,7 +1284,7 @@ public class Position {
                 {1, 1, 1, 1, 1, 1, 1, 1}
         };
         // Max: 2
-        short safety[][] = {
+        int safety[][] = {
                 {2, 2, 1, 0, 0, 1, 2, 2},
                 {2, 1, 0, 0, 0, 0, 1, 2},
                 {0, 0, 0, 0, 0, 0, 0, 0},
@@ -1248,7 +1295,7 @@ public class Position {
                 {2, 2, 1, 0, 0, 1, 2, 2}
         };
         // Max: 32
-        short promotion[][] = {
+        int promotion[][] = {
                 {0, 3, 1, 0, 0, 0, 0, 0}, // Black
                 {0, 0, 0, 0, 0, 1, 3, 0}  // White
         };
@@ -1281,6 +1328,9 @@ public class Position {
     }
 
     private int negamax(Position pos, int depth, int a, int b, int color) {
+        synchronized (this) {
+            ++negamaxed;
+        }
         List<Move> moves = new LinkedList<Move>();
         IntRef result = new IntRef();
         int moveCount = pos.generateLegalMoves(moves, result);
@@ -1358,6 +1408,7 @@ public class Position {
     }
 
     public Move selectBestMove(List<Move> moves) {
+        negamaxed = piecesEaten = 0;
         System.out.println("AI negamax:");
         List<Thread> threads = new LinkedList<Thread>();
         TreeSet<MultimapWorkaround> values = new TreeSet<MultimapWorkaround>();
@@ -1379,9 +1430,37 @@ public class Position {
                 }
             }
         }
+        for (MultimapWorkaround mw : values) {
+            String line = "";
+            switch (board[mw.move.fromRow][mw.move.fromCol].who) {
+                case KING:
+                    line = "King ";
+                    break;
+                case QUEEN:
+                    line = "Queen ";
+                    break;
+                case ROOK:
+                    line = "Rook ";
+                    break;
+                case BISHOP:
+                    line = "Bishop ";
+                    break;
+                case KNIGHT:
+                    line = "Knight ";
+                    break;
+                case PAWN:
+                    line = "Pawn ";
+                    break;
+            }
+            line += Position.printFile(mw.move.fromCol) + Position.printRank(mw.move.fromRow) + "-" +
+                    Position.printFile(mw.move.toCol) + Position.printRank(mw.move.toRow);
+            System.out.printf("%s : %d%n", line, mw.value);
+        }
 
         long time2 = System.currentTimeMillis();
-        System.out.println("Time elapsed: " + (time2 - time1) + " s");
+        System.out.println("Negamax used " + negamaxed + " times");
+        System.out.println("Pieces eaten " + piecesEaten);
+        System.out.println("Time elapsed: " + (time2 - time1) + " ms");
         ArrayList<Move> sameValues = new ArrayList<Move>();
         Random rand = new Random();
         rand.setSeed(time2);
@@ -1438,6 +1517,9 @@ public class Position {
             List<Piece> list = (to.owner == Owner.BLACK) ? blackPieces : whitePieces;
             list.remove(to);
             lastEatMove = movesDone + 1;
+            synchronized (this) {
+                ++piecesEaten;
+            }
         }
 
         Piece from = board[m.fromRow][m.fromCol];
@@ -1521,5 +1603,51 @@ public class Position {
 
     public Piece[][] getBoard() {
         return board;
+    }
+
+    public static String printFile(int file) {
+        switch (file) {
+            case 0:
+                return "a";
+            case 1:
+                return "b";
+            case 2:
+                return "c";
+            case 3:
+                return "d";
+            case 4:
+                return "e";
+            case 5:
+                return "f";
+            case 6:
+                return "g";
+            case 7:
+                return "h";
+            default:
+                return "?";
+        }
+    }
+
+    public static String printRank(int rank) {
+        switch (rank) {
+            case 0:
+                return "1";
+            case 1:
+                return "2";
+            case 2:
+                return "3";
+            case 3:
+                return "4";
+            case 4:
+                return "5";
+            case 5:
+                return "6";
+            case 6:
+                return "7";
+            case 7:
+                return "8";
+            default:
+                return "?";
+        }
     }
 }
