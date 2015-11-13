@@ -278,7 +278,7 @@ public class MainActivity extends AppCompatActivity {
                             if (fromCol == 0xF) {
                                 fromCol = xfile;
                                 fromRow = yrank;
-                                message = printFile(fromCol) + printRank(fromRow) + "-";
+                                message = Position.printFile(fromCol) + Position.printRank(fromRow) + "-";
                             } else {
                                 toCol = xfile;
                                 toRow = yrank;
@@ -289,8 +289,8 @@ public class MainActivity extends AppCompatActivity {
                                             && m.fromRow == move.fromRow
                                             && m.toCol == move.toCol
                                             && m.toRow == move.toRow) {
-                                        message = printFile(fromCol) + printRank(fromRow) + "-" +
-                                                printFile(toCol) + printRank(toRow);
+                                        message = Position.printFile(fromCol) + Position.printRank(fromRow) + "-" +
+                                                Position.printFile(toCol) + Position.printRank(toRow);
                                         legal = true;
                                         m.AI = false;
                                         System.out.println("You made a move");
@@ -369,7 +369,7 @@ public class MainActivity extends AppCompatActivity {
                 System.out.println("GAME ENDED");
                 return;
             }
-            position.showSpecialInfo();
+            System.out.println(position.showSpecialInfo());
 
             if (Owner.BLACK == position.tellTurn()) {
                 Move bestMove = position.selectBestMove(moves);
@@ -386,52 +386,6 @@ public class MainActivity extends AppCompatActivity {
                 gameThread = new GameThread();
                 gameThread.run();
             }
-        }
-    }
-
-    public String printFile(int file) {
-        switch (file) {
-            case 0:
-                return "a";
-            case 1:
-                return "b";
-            case 2:
-                return "c";
-            case 3:
-                return "d";
-            case 4:
-                return "e";
-            case 5:
-                return "f";
-            case 6:
-                return "g";
-            case 7:
-                return "h";
-            default:
-                return "?";
-        }
-    }
-
-    public String printRank(int rank) {
-        switch (rank) {
-            case 0:
-                return "1";
-            case 1:
-                return "2";
-            case 2:
-                return "3";
-            case 3:
-                return "4";
-            case 4:
-                return "5";
-            case 5:
-                return "6";
-            case 6:
-                return "7";
-            case 7:
-                return "8";
-            default:
-                return "?";
         }
     }
 }
