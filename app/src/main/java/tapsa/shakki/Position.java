@@ -11,20 +11,53 @@ import java.util.TreeSet;
  * Created by Tapsa on 11.11.2015.
  */
 public class Position {
-    List<Piece> whitePieces = new LinkedList<Piece>(), blackPieces = new LinkedList<Piece>();
+    private List<Piece> whitePieces, blackPieces;
     // Chess board which contais pointers to pieces.
     // If a square doesn't have a piece on it, it'll point to NULL.
-    Piece[][] board = new Piece[8][8];
+    private Piece[][] board = new Piece[8][8];
     // Keeps track of turns.
-    Owner whoseTurn;
+    private Owner whoseTurn;
     // bit 1 = White's kingside
     // bit 2 = White's queenside
     // bit 3 = Black's kingside
     // bit 4 = Black's queenside
-    short canCastle;
+    private short canCastle;
     // For en passant move.
-    Piece passer;
-    int movesDone, lastEatMove;
+    private Piece passer;
+    private int movesDone, lastEatMove;
+
+    // Kertoimet
+    private final static int c1 = 20, c2 = 10, c4 = 1, c5 = 7;
+
+    // Normal: 78, max: 206
+    private final static int value[] = {0, 18, 10, 6, 6, 2};
+    // Max: 48
+    private final static int center[][] = {
+            {1, 1, 1, 1, 1, 1, 1, 1},
+            {1, 2, 2, 2, 2, 2, 2, 1},
+            {1, 2, 3, 3, 3, 3, 2, 1},
+            {1, 2, 3, 3, 3, 3, 2, 1},
+            {1, 2, 3, 3, 3, 3, 2, 1},
+            {1, 2, 3, 3, 3, 3, 2, 1},
+            {1, 2, 2, 2, 2, 2, 2, 1},
+            {1, 1, 1, 1, 1, 1, 1, 1}
+    };
+    // Max: 2
+    private final static int safety[][] = {
+            {2, 2, 1, 0, 0, 1, 2, 2},
+            {2, 1, 0, 0, 0, 0, 1, 2},
+            {0, 0, 0, 0, 0, 0, 0, 0},
+            {0, 0, 0, 0, 0, 0, 0, 0},
+            {0, 0, 0, 0, 0, 0, 0, 0},
+            {0, 0, 0, 0, 0, 0, 0, 0},
+            {2, 1, 0, 0, 0, 0, 1, 2},
+            {2, 2, 1, 0, 0, 1, 2, 2}
+    };
+    // Max: 32
+    private final static int promotion[][] = {
+            {0, 3, 1, 0, 0, 0, 0, 0}, // Black
+            {0, 0, 0, 0, 0, 1, 3, 0}  // White
+    };
 
     public Position() {
     }
@@ -73,6 +106,8 @@ public class Position {
                 p = null;
             }
         }
+        whitePieces = new LinkedList<Piece>();
+        blackPieces = new LinkedList<Piece>();
     }
 
     // Puts pieces in starting position.
@@ -127,7 +162,7 @@ public class Position {
         movesDone = lastEatMove = 0;
     }
 
-    public String printColRow(File col, Rank row) {
+    public static String printColRow(File col, Rank row) {
         return " " + (char) (col.ordinal() + 97) + (row.ordinal() + 1);
     }
 
@@ -149,7 +184,7 @@ public class Position {
         return true;
     }
 
-    private boolean moveCheckPawn(Piece p, List<Move> m, int fC, int fR, int tC, int tR, int two) {
+    private static boolean moveCheckPawn(Piece p, List<Move> m, int fC, int fR, int tC, int tR, int two) {
         if (null != p) return false;
         m.add(new Move(fC, fR, tC, tR, two));
         return true;
@@ -167,11 +202,10 @@ public class Position {
         }
     }
 
-    private boolean threatenCheck(Piece p, IntRef threats, Who secondPieceType, Piece t) {
+    private boolean threatenCheck(Piece p, List<Piece> threats, Who secondPieceType) {
         if (null == p) return false;
         if (p.owner != whoseTurn && (p.who == Who.QUEEN || p.who == secondPieceType)) {
-            t = p;
-            ++threats.value;
+            threats.add(p);
         }
         // Stop checking.
         return true;
@@ -198,10 +232,9 @@ public class Position {
         if (null != p && p.owner != whoseTurn && p.who == pieceType) ++threats.value;
     }
 
-    private void threatenCheck1Piece(Piece p, IntRef threats, Who pieceType, Piece t) {
+    private void threatenCheck1Piece(Piece p, List<Piece> threats, Who pieceType) {
         if (null != p && p.owner != whoseTurn && p.who == pieceType) {
-            t = p;
-            ++threats.value;
+            threats.add(p);
         }
     }
 
@@ -372,44 +405,41 @@ public class Position {
         return threats.value != 0;
     }
 
-    private boolean isKingThreatened(int col, int row, Piece threatener) {
-        // Uhkien määrä (tarvitaan myöhemmin)
-        IntRef threats = new IntRef();
-
+    private boolean isKingThreatened(int col, int row, List<Piece> threats) {
         // Up/Down/Left/Right: queens, rooks
         // Up
         for (int r = row + 1; r < 8; r++) {
-            if (threatenCheck(board[r][col], threats, Who.ROOK, threatener)) break;
+            if (threatenCheck(board[r][col], threats, Who.ROOK)) break;
         }
         // Right
         for (int c = col + 1; c < 8; c++) {
-            if (threatenCheck(board[row][c], threats, Who.ROOK, threatener)) break;
+            if (threatenCheck(board[row][c], threats, Who.ROOK)) break;
         }
         // Down
         for (int r = row - 1; r >= 0; r--) {
-            if (threatenCheck(board[r][col], threats, Who.ROOK, threatener)) break;
+            if (threatenCheck(board[r][col], threats, Who.ROOK)) break;
         }
         // Left
         for (int c = col - 1; c >= 0; c--) {
-            if (threatenCheck(board[row][c], threats, Who.ROOK, threatener)) break;
+            if (threatenCheck(board[row][c], threats, Who.ROOK)) break;
         }
 
         // Sideways: queens, bishops
         // Up-right
         for (int r = row + 1, c = col + 1; r < 8 && c < 8; r++, c++) {
-            if (threatenCheck(board[r][c], threats, Who.BISHOP, threatener)) break;
+            if (threatenCheck(board[r][c], threats, Who.BISHOP)) break;
         }
         // Right-down
         for (int r = row - 1, c = col + 1; r >= 0 && c < 8; r--, c++) {
-            if (threatenCheck(board[r][c], threats, Who.BISHOP, threatener)) break;
+            if (threatenCheck(board[r][c], threats, Who.BISHOP)) break;
         }
         // Down-left
         for (int r = row - 1, c = col - 1; r >= 0 && c >= 0; r--, c--) {
-            if (threatenCheck(board[r][c], threats, Who.BISHOP, threatener)) break;
+            if (threatenCheck(board[r][c], threats, Who.BISHOP)) break;
         }
         // Left-up
         for (int r = row + 1, c = col - 1; r < 8 && c >= 0; r++, c--) {
-            if (threatenCheck(board[r][c], threats, Who.BISHOP, threatener)) break;
+            if (threatenCheck(board[r][c], threats, Who.BISHOP)) break;
         }
 
         // Checking for knights
@@ -418,37 +448,37 @@ public class Position {
         if (r < 6) {
             // Right
             if (c < 7)
-                threatenCheck1Piece(board[r + 2][c + 1], threats, Who.KNIGHT, threatener);
+                threatenCheck1Piece(board[r + 2][c + 1], threats, Who.KNIGHT);
             // Left
             if (c > 0)
-                threatenCheck1Piece(board[r + 2][c - 1], threats, Who.KNIGHT, threatener);
+                threatenCheck1Piece(board[r + 2][c - 1], threats, Who.KNIGHT);
         }
         // Right
         if (c < 6) {
             // Up
             if (r < 7)
-                threatenCheck1Piece(board[r + 1][c + 2], threats, Who.KNIGHT, threatener);
+                threatenCheck1Piece(board[r + 1][c + 2], threats, Who.KNIGHT);
             // Down
             if (r > 0)
-                threatenCheck1Piece(board[r - 1][c + 2], threats, Who.KNIGHT, threatener);
+                threatenCheck1Piece(board[r - 1][c + 2], threats, Who.KNIGHT);
         }
         // Down
         if (r > 1) {
             // Right
             if (c < 7)
-                threatenCheck1Piece(board[r - 2][c + 1], threats, Who.KNIGHT, threatener);
+                threatenCheck1Piece(board[r - 2][c + 1], threats, Who.KNIGHT);
             // Left
             if (c > 0)
-                threatenCheck1Piece(board[r - 2][c - 1], threats, Who.KNIGHT, threatener);
+                threatenCheck1Piece(board[r - 2][c - 1], threats, Who.KNIGHT);
         }
         // Left
         if (c > 1) {
             // Up
             if (r < 7)
-                threatenCheck1Piece(board[r + 1][c - 2], threats, Who.KNIGHT, threatener);
+                threatenCheck1Piece(board[r + 1][c - 2], threats, Who.KNIGHT);
             // Down
             if (r > 0)
-                threatenCheck1Piece(board[r - 1][c - 2], threats, Who.KNIGHT, threatener);
+                threatenCheck1Piece(board[r - 1][c - 2], threats, Who.KNIGHT);
         }
 
         // Checking for pawns.
@@ -465,17 +495,13 @@ public class Position {
         if (doPawns) {
             // Right side
             if (col < 7)
-                threatenCheck1Piece(board[row][col + 1], threats, Who.PAWN, threatener);
+                threatenCheck1Piece(board[row][col + 1], threats, Who.PAWN);
             // Left side
             if (col > 0)
-                threatenCheck1Piece(board[row][col - 1], threats, Who.PAWN, threatener);
+                threatenCheck1Piece(board[row][col - 1], threats, Who.PAWN);
         }
 
-        // Useita uhkaajia.
-        // Siispä ei ole mahdollista laittaa eteen mitään.
-        if (threats.value > 1) threatener = null;
-        //if (threats.value == 1 && null == threatener) System.exit(17); <- Uncomment and fix!
-        return threats.value != 0;
+        return threats.size() != 0;
     }
 
     // Onko kuningasta suojaavan napin takana uhka?
@@ -541,7 +567,6 @@ public class Position {
     }
 
     private void checkOwnMovesToHere(List<Move> m, int tC, int tR, Piece king) {
-        //System.out.println("Checking if other pieces can protect the king");
         // Samanlainen tarkistus kuin uhkaamisista.
         // Tässä vaan tarkistetaan toisin päin.
         // Kuningasta jo suojaavia nappeja ei saa siirtää!
@@ -716,7 +741,6 @@ public class Position {
     }
 
     private void switchCaseFallThroughWorkaround1(List<Move> moves, int col, int row, Piece king) {
-        System.out.println("Queen, Rook, Bishop, can move to protect?");
         // Tarkistetaan suora jono nappia kohti nappi mukaanlukien.
         for (int r = row, c = col; r != king.row.ordinal() || c != king.col.ordinal(); ) {
             // Kutsu funktiota joka tarkistaa voiko oman napin siirtää tähän kohtaan laudalla.
@@ -834,7 +858,7 @@ public class Position {
         }
     }
 
-    public int generateLegalMoves(List<Move> moves, IntRef result) {
+    public int generateLegalMoves(List<Move> moves, List<Piece> threats) {
         // • Käydään läpi vuorossa olevan pelaajan nappulat.
         // • Ensimmäisenä on aina kuningas.
         // • Tarkistetaan uhkaako vihollisen nappulat kuningasta.
@@ -843,18 +867,10 @@ public class Position {
         // • Jos kuningasta voi siirtää, jatketaan muihin omiin nappuloihin.
         // • Niissä ei enää pohdita kuninkaan uhkaamisia.
 
-        List<Piece> playersPieces, enemysPieces;
-        if (whoseTurn == Owner.WHITE) {
-            playersPieces = whitePieces;
-            enemysPieces = blackPieces;
-        } else {
-            playersPieces = blackPieces;
-            enemysPieces = whitePieces;
-        }
+        List<Piece> playersPieces = (whoseTurn == Owner.WHITE) ? whitePieces : blackPieces;
 
         // Kuninkaan käsittely tähän
         Piece king = playersPieces.get(0);
-        Piece threatener = null;
 
         // Voiko kuningas liikkua?
         {
@@ -907,17 +923,17 @@ public class Position {
         }
 
         // Uhataanko?
-        if (isKingThreatened(king.col.ordinal(), king.row.ordinal(), threatener)) {
+        if (isKingThreatened(king.col.ordinal(), king.row.ordinal(), threats)) {
             //result = (whoseTurn == WHITE) ? -1000 : 1000;
             // Jos vain yksi vihollinen uhkaa, tarkista voiko laittaa eteen nappeja.
             // Tämä on totta vain jos kuningasta uhataan.
-            if (null != threatener) {
-                //System.out.println("Can we block threat to king?");
+            if (1 == threats.size()) {
                 // Tarkista pelkästään voiko tähän väliin laittaa nappeja.
                 // TEE OMA FUNKTIO JOSSA TARKISTETAAN VOIKO OMAN LAITTAA RUUTUUN!
                 // Vihollistyypin perusteella katsotaan mitä ruutuja tarkistetaan!
-                int row = threatener.row.ordinal(), col = threatener.col.ordinal();
-                switch (threatener.who) {
+                Piece threat = threats.get(0);
+                int row = threat.row.ordinal(), col = threat.col.ordinal();
+                switch (threat.who) {
                     case QUEEN:
                         switchCaseFallThroughWorkaround1(moves, col, row, king);
                         break;
@@ -940,11 +956,10 @@ public class Position {
                 }
             }
 
-            // Muita nappeja ei voi siirtää muualle!
+            /*/ Muita nappeja ei voi siirtää muualle!
             if (moves.size() == 0) {
-                int res = (whoseTurn == Owner.WHITE) ? 0xC000 : 0x4000;
-                result.value = res;
-            }
+                result.value = 0x4000;
+            }*/
             return moves.size();
         }
 
@@ -1264,42 +1279,9 @@ public class Position {
         return moves.size();
     }
 
-    private static int negamaxed, piecesEaten;
+    private static Integer negamaxed, piecesEaten, negamaxTotal;
 
     public int evaluate(int moveCount) {
-        // Kertoimet
-        int c1 = 20, c2 = 10, c4 = 1, c5 = 7;
-
-        // Normal: 78, max: 206
-        int value[] = {0, 18, 10, 6, 6, 2};
-        // Max: 48
-        int center[][] = {
-                {1, 1, 1, 1, 1, 1, 1, 1},
-                {1, 2, 2, 2, 2, 2, 2, 1},
-                {1, 2, 3, 3, 3, 3, 2, 1},
-                {1, 2, 3, 3, 3, 3, 2, 1},
-                {1, 2, 3, 3, 3, 3, 2, 1},
-                {1, 2, 3, 3, 3, 3, 2, 1},
-                {1, 2, 2, 2, 2, 2, 2, 1},
-                {1, 1, 1, 1, 1, 1, 1, 1}
-        };
-        // Max: 2
-        int safety[][] = {
-                {2, 2, 1, 0, 0, 1, 2, 2},
-                {2, 1, 0, 0, 0, 0, 1, 2},
-                {0, 0, 0, 0, 0, 0, 0, 0},
-                {0, 0, 0, 0, 0, 0, 0, 0},
-                {0, 0, 0, 0, 0, 0, 0, 0},
-                {0, 0, 0, 0, 0, 0, 0, 0},
-                {2, 1, 0, 0, 0, 0, 1, 2},
-                {2, 2, 1, 0, 0, 1, 2, 2}
-        };
-        // Max: 32
-        int promotion[][] = {
-                {0, 3, 1, 0, 0, 0, 0, 0}, // Black
-                {0, 0, 0, 0, 0, 1, 3, 0}  // White
-        };
-
         ListIterator<Piece> whiteit = whitePieces.listIterator();
         ListIterator<Piece> blackit = blackPieces.listIterator();
         int matValue = 0, mobValue = 0, pawnValue = 0;
@@ -1328,29 +1310,25 @@ public class Position {
     }
 
     private int negamax(Position pos, int depth, int a, int b, int color) {
-        synchronized (this) {
+        synchronized (negamaxed) {
             ++negamaxed;
         }
         List<Move> moves = new LinkedList<Move>();
-        IntRef result = new IntRef();
-        int moveCount = pos.generateLegalMoves(moves, result);
+        List<Piece> threats = new LinkedList<Piece>();
+        int moveCount = pos.generateLegalMoves(moves, threats);
         if (moveCount == 0) {
             // Peli päättynyt
             // Nopeampi matti arvokkaammaksi.
-            return color * (result.value - color * 100 * depth);
+            return 0x1000 * depth * -threats.size();
         }
         if (depth == 0) {
             return color * pos.evaluate(color * moveCount);
         }
-        //short max = -30000;
         for (Move m : moves) {
             Position p = new Position(pos);
             p.executeMove(m);
             p.changeTurn();
             int value = -negamax(p, depth - 1, -b, -a, -color);
-            //if(value > max) max = value;
-            //if(max > a) a = max;
-            //if(a >= b) return a;
             if (value >= b) return b;
             if (value > a) a = value;
         }
@@ -1358,7 +1336,7 @@ public class Position {
         return a;
     }
 
-    class MultimapWorkaround implements Comparable {
+    private class MultimapWorkaround implements Comparable {
         Integer value;
         Move move;
 
@@ -1378,6 +1356,12 @@ public class Position {
         }
     }
 
+    public static int completion() {
+        synchronized (negamaxed) {
+            return (int) (100 * ((float) negamaxed / (float) negamaxTotal));
+        }
+    }
+
     private void minmax(Move m, TreeSet<MultimapWorkaround> values, int color) {
         Position p = new Position(this);
         p.executeMove(m);
@@ -1386,12 +1370,12 @@ public class Position {
         // Release: 5-6
         // Suurenna kun napit vähenee runsaasti?
         int value = color * negamax(p, 3, -30000, 30000, color);
-        synchronized (this) {
+        synchronized (values) {
             values.add(new MultimapWorkaround(value, m));
         }
     }
 
-    class MinMaxThread extends Thread {
+    private class MinMaxThread extends Thread {
         Move move;
         TreeSet<MultimapWorkaround> values;
         int color;
@@ -1409,6 +1393,8 @@ public class Position {
 
     public Move selectBestMove(List<Move> moves) {
         negamaxed = piecesEaten = 0;
+        int movesAt0 = moves.size();
+        negamaxTotal = movesAt0 * movesAt0 * movesAt0 * movesAt0;
         System.out.println("AI negamax:");
         List<Thread> threads = new LinkedList<Thread>();
         TreeSet<MultimapWorkaround> values = new TreeSet<MultimapWorkaround>();
@@ -1426,7 +1412,6 @@ public class Position {
                     t.join();
                     working = false;
                 } catch (InterruptedException e) {
-                    e.printStackTrace();
                 }
             }
         }
@@ -1517,7 +1502,7 @@ public class Position {
             List<Piece> list = (to.owner == Owner.BLACK) ? blackPieces : whitePieces;
             list.remove(to);
             lastEatMove = movesDone + 1;
-            synchronized (this) {
+            synchronized (piecesEaten) {
                 ++piecesEaten;
             }
         }
@@ -1572,7 +1557,6 @@ public class Position {
                 passer = from;
                 return;
             }
-            System.out.println("Deleting en passant... ");
             List<Piece> list = (from.owner == Owner.WHITE) ? blackPieces : whitePieces;
             if (list.remove(passer))
                 board[passer.row.ordinal()][passer.col.ordinal()] = null; // Will this work?
@@ -1649,5 +1633,10 @@ public class Position {
             default:
                 return "?";
         }
+    }
+
+    public static String printMove(Move m) {
+        return printFile(m.fromCol) + printRank(m.fromRow) + "-" +
+                printFile(m.toCol) + printRank(m.toRow);
     }
 }
