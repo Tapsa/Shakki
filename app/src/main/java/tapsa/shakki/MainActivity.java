@@ -25,10 +25,11 @@ public class MainActivity extends AppCompatActivity {
     Position position;
     Piece[][] board;
     DrawingView surf;
-    boolean cheat = false;
+    boolean cheat = false, moreInfo = false;
     GameThread gameThread = null;
     int fromCol = 0xF, fromRow, toCol, toRow;
     List<Move> moves;
+    String gameInfo = "";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -86,7 +87,7 @@ public class MainActivity extends AppCompatActivity {
 
         @Override
         protected void onDraw(Canvas canvas) {
-            updateBoard(canvas);
+            //updateBoard(canvas);
         }
 
         @Override
@@ -171,9 +172,16 @@ public class MainActivity extends AppCompatActivity {
             paint.setTextSize(lines[0]);
             canvas.drawColor(Color.BLACK);
             paint.setColor(Color.RED);
-            String turnText = (Owner.BLACK == position.tellTurn()) ? "AI's turn" : "Your turn";
+            String turnText;
+            if (Owner.BLACK == position.tellTurn()) {
+                turnText = "AI's turn " + Position.completion() + " %";
+            } else turnText = "Your turn";
             canvas.drawText(turnText, 10, lines[0], paint);
             paint.setTextSize(boardSide * 0.08f);
+            if (moreInfo) {
+                message = gameInfo;
+                moreInfo = false;
+            }
             canvas.drawText(message, 10, boardSide * 1.25f, paint);
 
             // Paint the chess board
@@ -289,8 +297,7 @@ public class MainActivity extends AppCompatActivity {
                                             && m.fromRow == move.fromRow
                                             && m.toCol == move.toCol
                                             && m.toRow == move.toRow) {
-                                        message = Position.printFile(fromCol) + Position.printRank(fromRow) + "-" +
-                                                Position.printFile(toCol) + Position.printRank(toRow);
+                                        message = Position.printMove(move);
                                         legal = true;
                                         m.AI = false;
                                         System.out.println("You made a move");
@@ -358,27 +365,35 @@ public class MainActivity extends AppCompatActivity {
         public void run() {
             boolean moved = false;
             if (position.isDraw()) {
-                System.out.println("DRAW");
+                gameInfo = "DRAW";
+                moreInfo = true;
                 return;
             }
             moves = new LinkedList<Move>();
-            IntRef result = new IntRef();
-            System.out.println("Legal moves: " + position.generateLegalMoves(moves, result));
-            if (result.value != 0) System.out.println("Check!");
+            List<Piece> threats = new LinkedList<Piece>();
+            System.out.println("\nLegal moves: " + position.generateLegalMoves(moves, threats));
+            if (!threats.isEmpty()) {
+                gameInfo = "Check!";
+                for (Piece t : threats) {
+                    gameInfo += "  @ " + Position.printFile(t.col.ordinal())
+                            + Position.printRank(t.row.ordinal());
+                }
+            }
             if (moves.isEmpty()) {
-                System.out.println("GAME ENDED");
+                gameInfo = "GAME ENDED";
+                moreInfo = true;
                 return;
             }
             System.out.println(position.showSpecialInfo());
 
             if (Owner.BLACK == position.tellTurn()) {
                 Move bestMove = position.selectBestMove(moves);
-                //printMove(bestMove);
-                System.out.println("AI made a move");
+                gameInfo = "AI made a move " + Position.printMove(bestMove);
                 position.executeMove(bestMove);
                 moved = true;
             }
 
+            moreInfo = true;
             surf.invalidate();
 
             if (moved) {
