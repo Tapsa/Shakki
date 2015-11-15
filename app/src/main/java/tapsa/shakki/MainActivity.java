@@ -5,18 +5,15 @@ import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
 import android.os.Bundle;
-import android.support.design.widget.FloatingActionButton;
-import android.support.design.widget.Snackbar;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
-import android.text.Layout;
 import android.view.MotionEvent;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
-import android.view.View;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.FrameLayout;
+import android.widget.Toast;
 
 import java.util.LinkedList;
 import java.util.List;
@@ -157,7 +154,7 @@ public class MainActivity extends AppCompatActivity {
                                 updateBoard(canvas);
                             }
                         }
-                        sleep(200);
+                        sleep(500);
                     } catch (InterruptedException ie) {
                     } finally {
                         if (null != canvas) {
@@ -308,8 +305,7 @@ public class MainActivity extends AppCompatActivity {
                                 }
                                 if (!legal) {
                                     message = "Illegal move!";
-                                }
-                                fromCol = 0xF;
+                                } else fromCol = 0xF;
                             }
                         } else {
                             message = "Make a move like e2-e4";
@@ -348,14 +344,31 @@ public class MainActivity extends AppCompatActivity {
         // Handle action bar item clicks here. The action bar will
         // automatically handle clicks on the Home/Up button, so long
         // as you specify a parent activity in AndroidManifest.xml.
-        int id = item.getItemId();
-
-        //noinspection SimplifiableIfStatement
-        if (id == R.id.action_settings) {
-            return true;
+        Context context = getApplicationContext();
+        int duration = Toast.LENGTH_SHORT;
+        switch (item.getItemId()) {
+            case R.id.action_new_game:
+                Toast.makeText(context, "Starting a new game", duration).show();
+                position.start();
+                surf.invalidate();
+                gameThread = new GameThread();
+                gameThread.run();
+                return true;
+            case R.id.action_moves2:
+                Position.levelOfAI = 1;
+                Toast.makeText(context, "AI now thinks 2 moves ahead", duration).show();
+                return true;
+            case R.id.action_moves4:
+                Position.levelOfAI = 3;
+                Toast.makeText(context, "AI now thinks 4 moves ahead", duration).show();
+                return true;
+            case R.id.action_moves6:
+                Position.levelOfAI = 5;
+                Toast.makeText(context, "AI now thinks 6 moves ahead", duration).show();
+                return true;
+            default:
+                return super.onOptionsItemSelected(item);
         }
-
-        return super.onOptionsItemSelected(item);
     }
 
     class GameThread extends Thread {

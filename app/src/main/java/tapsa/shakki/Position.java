@@ -25,6 +25,7 @@ public class Position {
     // For en passant move.
     private Piece passer;
     private int movesDone, lastEatMove;
+    public static int levelOfAI = 3;
 
     // Kertoimet
     private final static int c1 = 20, c2 = 10, c4 = 1, c5 = 7;
@@ -101,9 +102,9 @@ public class Position {
 
     // Removes all Pieces from the chess board.
     public void clear() {
-        for (Piece[] row : board) {
-            for (Piece p : row) {
-                p = null;
+        for (int row = 0; row < 8; ++row) {
+            for (int col = 0; col < 8; ++col) {
+                board[row][col] = null;
             }
         }
         whitePieces = new LinkedList<Piece>();
@@ -1369,7 +1370,7 @@ public class Position {
         // Debug: 4 max
         // Release: 5-6
         // Suurenna kun napit vähenee runsaasti?
-        int value = color * negamax(p, 3, -30000, 30000, color);
+        int value = color * negamax(p, levelOfAI, -30000, 30000, color);
         synchronized (values) {
             values.add(new MultimapWorkaround(value, m));
         }
