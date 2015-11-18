@@ -1280,7 +1280,7 @@ public class Position {
         return moves.size();
     }
 
-    private static Integer negamaxed, piecesEaten, negamaxTotal;
+    private static Integer negamaxed, negamaxTotal;
 
     public int evaluate(int moveCount) {
         ListIterator<Piece> whiteit = whitePieces.listIterator();
@@ -1393,7 +1393,7 @@ public class Position {
     }
 
     public Move selectBestMove(List<Move> moves) {
-        negamaxed = piecesEaten = 0;
+        negamaxed = 0;
         int movesAt0 = moves.size();
         negamaxTotal = movesAt0 * movesAt0 * movesAt0 * movesAt0;
         System.out.println("AI negamax:");
@@ -1403,7 +1403,7 @@ public class Position {
         int color = (whoseTurn == Owner.WHITE) ? -1 : 1;
         for (Move m : moves) {
             MinMaxThread thread = new MinMaxThread(m, values, color);
-            thread.run();
+            thread.start();
             threads.add(thread);
         }
         for (Thread t : threads) {
@@ -1445,7 +1445,6 @@ public class Position {
 
         long time2 = System.currentTimeMillis();
         System.out.println("Negamax used " + negamaxed + " times");
-        System.out.println("Pieces eaten " + piecesEaten);
         System.out.println("Time elapsed: " + (time2 - time1) + " ms");
         ArrayList<Move> sameValues = new ArrayList<Move>();
         Random rand = new Random();
@@ -1503,9 +1502,6 @@ public class Position {
             List<Piece> list = (to.owner == Owner.BLACK) ? blackPieces : whitePieces;
             list.remove(to);
             lastEatMove = movesDone + 1;
-            synchronized (piecesEaten) {
-                ++piecesEaten;
-            }
         }
 
         Piece from = board[m.fromRow][m.fromCol];

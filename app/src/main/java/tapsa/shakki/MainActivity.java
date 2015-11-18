@@ -1,17 +1,18 @@
 package tapsa.shakki;
 
 import android.content.Context;
+import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
-import android.view.Menu;
-import android.view.MenuItem;
 import android.widget.FrameLayout;
 import android.widget.Toast;
 
@@ -20,11 +21,8 @@ import java.util.List;
 
 public class MainActivity extends AppCompatActivity {
     Position position;
-    Piece[][] board;
-    DrawingView surf;
     boolean cheat = false, moreInfo = false;
     GameThread gameThread = null;
-    int fromCol = 0xF, fromRow, toCol, toRow;
     List<Move> moves;
     String gameInfo = "";
 
@@ -39,25 +37,26 @@ public class MainActivity extends AppCompatActivity {
 
         position = new Position();
         position.start();
-        surf.invalidate();
         gameThread = new GameThread();
-        gameThread.run();
+        gameThread.start();
     }
 
     class DrawingView extends SurfaceView implements SurfaceHolder.Callback {
         private final SurfaceHolder surfaceHolder;
         private final Paint paint = new Paint(Paint.ANTI_ALIAS_FLAG);
+        private Bitmap boardBitmap = null;
         private int boardSide, viewWidth, viewHeight;
+        private int fromCol = 0xF, fromRow, toCol, toRow, touchShowTime;
         private int[] lines;
         private DrawerThread thread = null;
         private String message = "";
+        private float touchX, touchY;
 
         public DrawingView(Context context) {
             super(context);
             paint.setStyle(Paint.Style.FILL);
             surfaceHolder = getHolder();
             surfaceHolder.addCallback(this);
-            surf = this;
         }
 
         public void startGraphics() {
@@ -121,6 +120,8 @@ public class MainActivity extends AppCompatActivity {
                     (int) (boardSide * 0.225f),
                     (int) (boardSide * 1.125f)
             };
+            paint.setTextSize(boardSide * 0.08f);
+            boardBitmap = null;
         }
 
         @Override
@@ -154,7 +155,7 @@ public class MainActivity extends AppCompatActivity {
                                 updateBoard(canvas);
                             }
                         }
-                        sleep(500);
+                        sleep(300);
                     } catch (InterruptedException ie) {
                     } finally {
                         if (null != canvas) {
@@ -166,94 +167,98 @@ public class MainActivity extends AppCompatActivity {
         }
 
         protected void updateBoard(Canvas canvas) {
-            paint.setTextSize(lines[0]);
-            canvas.drawColor(Color.BLACK);
+            // Paint the chess board
+            if (null == boardBitmap) {
+                boardBitmap = Bitmap.createBitmap(canvas.getWidth(), canvas.getHeight(), Bitmap.Config.ARGB_8888);
+                Canvas background = new Canvas(boardBitmap);
+                background.drawColor(Color.BLACK);
+                paint.setColor(Color.YELLOW);
+                background.drawRect(lines[0], lines[9], lines[8], lines[17], paint);
+                paint.setColor(Color.rgb(128, 128, 0));
+                background.drawRect(lines[1], lines[9], lines[2], lines[10], paint);
+                background.drawRect(lines[3], lines[9], lines[4], lines[10], paint);
+                background.drawRect(lines[5], lines[9], lines[6], lines[10], paint);
+                background.drawRect(lines[7], lines[9], lines[8], lines[10], paint);
+                background.drawRect(lines[0], lines[10], lines[1], lines[11], paint);
+                background.drawRect(lines[2], lines[10], lines[3], lines[11], paint);
+                background.drawRect(lines[4], lines[10], lines[5], lines[11], paint);
+                background.drawRect(lines[6], lines[10], lines[7], lines[11], paint);
+                background.drawRect(lines[1], lines[11], lines[2], lines[12], paint);
+                background.drawRect(lines[3], lines[11], lines[4], lines[12], paint);
+                background.drawRect(lines[5], lines[11], lines[6], lines[12], paint);
+                background.drawRect(lines[7], lines[11], lines[8], lines[12], paint);
+                background.drawRect(lines[0], lines[12], lines[1], lines[13], paint);
+                background.drawRect(lines[2], lines[12], lines[3], lines[13], paint);
+                background.drawRect(lines[4], lines[12], lines[5], lines[13], paint);
+                background.drawRect(lines[6], lines[12], lines[7], lines[13], paint);
+                background.drawRect(lines[1], lines[13], lines[2], lines[14], paint);
+                background.drawRect(lines[3], lines[13], lines[4], lines[14], paint);
+                background.drawRect(lines[5], lines[13], lines[6], lines[14], paint);
+                background.drawRect(lines[7], lines[13], lines[8], lines[14], paint);
+                background.drawRect(lines[0], lines[14], lines[1], lines[15], paint);
+                background.drawRect(lines[2], lines[14], lines[3], lines[15], paint);
+                background.drawRect(lines[4], lines[14], lines[5], lines[15], paint);
+                background.drawRect(lines[6], lines[14], lines[7], lines[15], paint);
+                background.drawRect(lines[1], lines[15], lines[2], lines[16], paint);
+                background.drawRect(lines[3], lines[15], lines[4], lines[16], paint);
+                background.drawRect(lines[5], lines[15], lines[6], lines[16], paint);
+                background.drawRect(lines[7], lines[15], lines[8], lines[16], paint);
+                background.drawRect(lines[0], lines[16], lines[1], lines[17], paint);
+                background.drawRect(lines[2], lines[16], lines[3], lines[17], paint);
+                background.drawRect(lines[4], lines[16], lines[5], lines[17], paint);
+                background.drawRect(lines[6], lines[16], lines[7], lines[17], paint);
+
+                paint.setColor(Color.rgb(192, 192, 192));
+                background.drawText("a", boardSide * 0.13f, lines[20], paint);
+                background.drawText("b", boardSide * 0.23f, lines[20], paint);
+                background.drawText("c", boardSide * 0.33f, lines[20], paint);
+                background.drawText("d", boardSide * 0.43f, lines[20], paint);
+                background.drawText("e", boardSide * 0.53f, lines[20], paint);
+                background.drawText("f", boardSide * 0.63f, lines[20], paint);
+                background.drawText("g", boardSide * 0.73f, lines[20], paint);
+                background.drawText("h", boardSide * 0.83f, lines[20], paint);
+                background.drawText("8", lines[18], boardSide * 0.325f, paint);
+                background.drawText("7", lines[18], boardSide * 0.425f, paint);
+                background.drawText("6", lines[18], boardSide * 0.525f, paint);
+                background.drawText("5", lines[18], boardSide * 0.625f, paint);
+                background.drawText("4", lines[18], boardSide * 0.725f, paint);
+                background.drawText("3", lines[18], boardSide * 0.825f, paint);
+                background.drawText("2", lines[18], boardSide * 0.925f, paint);
+                background.drawText("1", lines[18], boardSide * 1.025f, paint);
+                background.drawText("a", boardSide * 0.13f, lines[21], paint);
+                background.drawText("b", boardSide * 0.23f, lines[21], paint);
+                background.drawText("c", boardSide * 0.33f, lines[21], paint);
+                background.drawText("d", boardSide * 0.43f, lines[21], paint);
+                background.drawText("e", boardSide * 0.53f, lines[21], paint);
+                background.drawText("f", boardSide * 0.63f, lines[21], paint);
+                background.drawText("g", boardSide * 0.73f, lines[21], paint);
+                background.drawText("h", boardSide * 0.83f, lines[21], paint);
+                background.drawText("8", lines[19], boardSide * 0.325f, paint);
+                background.drawText("7", lines[19], boardSide * 0.425f, paint);
+                background.drawText("6", lines[19], boardSide * 0.525f, paint);
+                background.drawText("5", lines[19], boardSide * 0.625f, paint);
+                background.drawText("4", lines[19], boardSide * 0.725f, paint);
+                background.drawText("3", lines[19], boardSide * 0.825f, paint);
+                background.drawText("2", lines[19], boardSide * 0.925f, paint);
+                background.drawText("1", lines[19], boardSide * 1.025f, paint);
+            }
+            canvas.drawBitmap(boardBitmap, 0, 0, paint);
+
+            // Paint messages
             paint.setColor(Color.RED);
             String turnText;
             if (Owner.BLACK == position.tellTurn()) {
                 turnText = "AI's turn " + Position.completion() + " %";
             } else turnText = "Your turn";
             canvas.drawText(turnText, 10, lines[0], paint);
-            paint.setTextSize(boardSide * 0.08f);
             if (moreInfo) {
                 message = gameInfo;
                 moreInfo = false;
             }
             canvas.drawText(message, 10, boardSide * 1.25f, paint);
 
-            // Paint the chess board
-            paint.setColor(Color.YELLOW);
-            canvas.drawRect(lines[0], lines[9], lines[8], lines[17], paint);
-            paint.setColor(Color.rgb(128, 128, 0));
-            canvas.drawRect(lines[1], lines[9], lines[2], lines[10], paint);
-            canvas.drawRect(lines[3], lines[9], lines[4], lines[10], paint);
-            canvas.drawRect(lines[5], lines[9], lines[6], lines[10], paint);
-            canvas.drawRect(lines[7], lines[9], lines[8], lines[10], paint);
-            canvas.drawRect(lines[0], lines[10], lines[1], lines[11], paint);
-            canvas.drawRect(lines[2], lines[10], lines[3], lines[11], paint);
-            canvas.drawRect(lines[4], lines[10], lines[5], lines[11], paint);
-            canvas.drawRect(lines[6], lines[10], lines[7], lines[11], paint);
-            canvas.drawRect(lines[1], lines[11], lines[2], lines[12], paint);
-            canvas.drawRect(lines[3], lines[11], lines[4], lines[12], paint);
-            canvas.drawRect(lines[5], lines[11], lines[6], lines[12], paint);
-            canvas.drawRect(lines[7], lines[11], lines[8], lines[12], paint);
-            canvas.drawRect(lines[0], lines[12], lines[1], lines[13], paint);
-            canvas.drawRect(lines[2], lines[12], lines[3], lines[13], paint);
-            canvas.drawRect(lines[4], lines[12], lines[5], lines[13], paint);
-            canvas.drawRect(lines[6], lines[12], lines[7], lines[13], paint);
-            canvas.drawRect(lines[1], lines[13], lines[2], lines[14], paint);
-            canvas.drawRect(lines[3], lines[13], lines[4], lines[14], paint);
-            canvas.drawRect(lines[5], lines[13], lines[6], lines[14], paint);
-            canvas.drawRect(lines[7], lines[13], lines[8], lines[14], paint);
-            canvas.drawRect(lines[0], lines[14], lines[1], lines[15], paint);
-            canvas.drawRect(lines[2], lines[14], lines[3], lines[15], paint);
-            canvas.drawRect(lines[4], lines[14], lines[5], lines[15], paint);
-            canvas.drawRect(lines[6], lines[14], lines[7], lines[15], paint);
-            canvas.drawRect(lines[1], lines[15], lines[2], lines[16], paint);
-            canvas.drawRect(lines[3], lines[15], lines[4], lines[16], paint);
-            canvas.drawRect(lines[5], lines[15], lines[6], lines[16], paint);
-            canvas.drawRect(lines[7], lines[15], lines[8], lines[16], paint);
-            canvas.drawRect(lines[0], lines[16], lines[1], lines[17], paint);
-            canvas.drawRect(lines[2], lines[16], lines[3], lines[17], paint);
-            canvas.drawRect(lines[4], lines[16], lines[5], lines[17], paint);
-            canvas.drawRect(lines[6], lines[16], lines[7], lines[17], paint);
-
             // Paint the pieces
-            paint.setTextSize(boardSide * 0.08f);
-            paint.setColor(Color.rgb(192, 192, 192));
-            canvas.drawText("a", boardSide * 0.13f, lines[20], paint);
-            canvas.drawText("b", boardSide * 0.23f, lines[20], paint);
-            canvas.drawText("c", boardSide * 0.33f, lines[20], paint);
-            canvas.drawText("d", boardSide * 0.43f, lines[20], paint);
-            canvas.drawText("e", boardSide * 0.53f, lines[20], paint);
-            canvas.drawText("f", boardSide * 0.63f, lines[20], paint);
-            canvas.drawText("g", boardSide * 0.73f, lines[20], paint);
-            canvas.drawText("h", boardSide * 0.83f, lines[20], paint);
-            canvas.drawText("8", lines[18], boardSide * 0.325f, paint);
-            canvas.drawText("7", lines[18], boardSide * 0.425f, paint);
-            canvas.drawText("6", lines[18], boardSide * 0.525f, paint);
-            canvas.drawText("5", lines[18], boardSide * 0.625f, paint);
-            canvas.drawText("4", lines[18], boardSide * 0.725f, paint);
-            canvas.drawText("3", lines[18], boardSide * 0.825f, paint);
-            canvas.drawText("2", lines[18], boardSide * 0.925f, paint);
-            canvas.drawText("1", lines[18], boardSide * 1.025f, paint);
-            canvas.drawText("a", boardSide * 0.13f, lines[21], paint);
-            canvas.drawText("b", boardSide * 0.23f, lines[21], paint);
-            canvas.drawText("c", boardSide * 0.33f, lines[21], paint);
-            canvas.drawText("d", boardSide * 0.43f, lines[21], paint);
-            canvas.drawText("e", boardSide * 0.53f, lines[21], paint);
-            canvas.drawText("f", boardSide * 0.63f, lines[21], paint);
-            canvas.drawText("g", boardSide * 0.73f, lines[21], paint);
-            canvas.drawText("h", boardSide * 0.83f, lines[21], paint);
-            canvas.drawText("8", lines[19], boardSide * 0.325f, paint);
-            canvas.drawText("7", lines[19], boardSide * 0.425f, paint);
-            canvas.drawText("6", lines[19], boardSide * 0.525f, paint);
-            canvas.drawText("5", lines[19], boardSide * 0.625f, paint);
-            canvas.drawText("4", lines[19], boardSide * 0.725f, paint);
-            canvas.drawText("3", lines[19], boardSide * 0.825f, paint);
-            canvas.drawText("2", lines[19], boardSide * 0.925f, paint);
-            canvas.drawText("1", lines[19], boardSide * 1.025f, paint);
-            board = position.getBoard();
+            Piece[][] board = position.getBoard();
             for (int row = 0; row < 8; ++row) {
                 for (int col = 0; col < 8; ++col) {
                     if (null != board[row][col]) {
@@ -266,66 +271,63 @@ public class MainActivity extends AppCompatActivity {
                     }
                 }
             }
+            // Paint the touch point
+            if (0 < --touchShowTime) {
+                paint.setColor(Color.RED);
+                canvas.drawCircle(touchX, touchY, boardSide * 0.02f, paint);
+            }
         }
 
         @Override
         public boolean onTouchEvent(MotionEvent event) {
-            paint.setTextSize(lines[0]);
-
             if (event.getAction() == MotionEvent.ACTION_DOWN) {
-                if (surfaceHolder.getSurface().isValid()) {
-                    int xfile = (int) ((event.getX() - lines[0]) / boardSide * 10);
-                    int yrank = -(int) ((event.getY() - lines[9]) / boardSide * 10 - 8);
-                    boolean moved = false;
+                touchX = event.getX();
+                touchY = event.getY();
+                touchShowTime = 6;
+                int xfile = (int) ((touchX - lines[0]) / boardSide * 10);
+                int yrank = -(int) ((touchY - lines[9]) / boardSide * 10 - 8);
+                boolean moved = false;
 
-                    if (Owner.WHITE == position.tellTurn()) {
-                        if (0 <= xfile && xfile < 8 && 0 <= yrank && yrank < 8) {
-                            if (fromCol == 0xF) {
-                                fromCol = xfile;
-                                fromRow = yrank;
-                                message = Position.printFile(fromCol) + Position.printRank(fromRow) + "-";
-                            } else {
-                                toCol = xfile;
-                                toRow = yrank;
-                                Move move = new Move(fromCol, fromRow, toCol, toRow);
-                                boolean legal = false;
-                                for (Move m : moves) {
-                                    if (m.fromCol == move.fromCol
-                                            && m.fromRow == move.fromRow
-                                            && m.toCol == move.toCol
-                                            && m.toRow == move.toRow) {
-                                        message = Position.printMove(move);
-                                        legal = true;
-                                        m.AI = false;
-                                        System.out.println("You made a move");
-                                        position.executeMove(m);
-                                        moved = true;
-                                        break;
-                                    }
-                                }
-                                if (!legal) {
-                                    message = "Illegal move!";
-                                } else fromCol = 0xF;
-                            }
+                if (Owner.WHITE == position.tellTurn()) {
+                    if (0 <= xfile && xfile < 8 && 0 <= yrank && yrank < 8) {
+                        if (fromCol == 0xF) {
+                            fromCol = xfile;
+                            fromRow = yrank;
+                            message = Position.printFile(fromCol) + Position.printRank(fromRow) + "-";
                         } else {
-                            message = "Make a move like e2-e4";
-                            fromCol = 0xF;
+                            toCol = xfile;
+                            toRow = yrank;
+                            Move move = new Move(fromCol, fromRow, toCol, toRow);
+                            boolean legal = false;
+                            for (Move m : moves) {
+                                if (m.fromCol == move.fromCol
+                                        && m.fromRow == move.fromRow
+                                        && m.toCol == move.toCol
+                                        && m.toRow == move.toRow) {
+                                    message = Position.printMove(move);
+                                    legal = true;
+                                    m.AI = false;
+                                    System.out.println("You made a move");
+                                    position.executeMove(m);
+                                    moved = true;
+                                    break;
+                                }
+                            }
+                            if (!legal) {
+                                message = "Illegal move!";
+                            } else fromCol = 0xF;
                         }
-                    } else message = "AI is thinking";
-
-                    Canvas canvas = surfaceHolder.lockCanvas();
-                    updateBoard(canvas);
-                    // Paint the touch point
-                    paint.setColor(Color.RED);
-                    canvas.drawCircle(event.getX(), event.getY(), boardSide * 0.02f, paint);
-                    surfaceHolder.unlockCanvasAndPost(canvas);
-
-                    // Turn changes.
-                    if (moved) {
-                        position.changeTurn();
-                        gameThread = new GameThread();
-                        gameThread.run();
+                    } else {
+                        message = "Make a move like e2-e4";
+                        fromCol = 0xF;
                     }
+                } else message = "AI is thinking";
+
+                // Turn changes.
+                if (moved) {
+                    position.changeTurn();
+                    gameThread = new GameThread();
+                    gameThread.start();
                 }
             }
             return false;
@@ -350,9 +352,8 @@ public class MainActivity extends AppCompatActivity {
             case R.id.action_new_game:
                 Toast.makeText(context, "Starting a new game", duration).show();
                 position.start();
-                surf.invalidate();
                 gameThread = new GameThread();
-                gameThread.run();
+                gameThread.start();
                 return true;
             case R.id.action_moves2:
                 Position.levelOfAI = 1;
@@ -384,7 +385,7 @@ public class MainActivity extends AppCompatActivity {
             }
             moves = new LinkedList<Move>();
             List<Piece> threats = new LinkedList<Piece>();
-            System.out.println("\nLegal moves: " + position.generateLegalMoves(moves, threats));
+            System.out.println("Legal moves: " + position.generateLegalMoves(moves, threats));
             if (!threats.isEmpty()) {
                 gameInfo = "Check!";
                 for (Piece t : threats) {
@@ -407,12 +408,11 @@ public class MainActivity extends AppCompatActivity {
             }
 
             moreInfo = true;
-            surf.invalidate();
 
             if (moved) {
                 position.changeTurn();
                 gameThread = new GameThread();
-                gameThread.run();
+                gameThread.start();
             }
         }
     }
