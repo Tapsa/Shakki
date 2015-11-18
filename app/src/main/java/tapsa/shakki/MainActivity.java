@@ -5,6 +5,9 @@ import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
+import android.media.AudioManager;
+import android.media.MediaPlayer;
+import android.media.RingtoneManager;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
@@ -16,6 +19,7 @@ import android.view.SurfaceView;
 import android.widget.FrameLayout;
 import android.widget.Toast;
 
+import java.io.IOException;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -248,7 +252,7 @@ public class MainActivity extends AppCompatActivity {
             paint.setColor(Color.RED);
             String turnText;
             if (Owner.BLACK == position.tellTurn()) {
-                turnText = "AI's turn " + Position.completion() + " %";
+                turnText = "AI's turn ~" + Position.completion() + " %";
             } else turnText = "Your turn";
             canvas.drawText(turnText, 10, lines[0], paint);
             if (moreInfo) {
@@ -404,6 +408,24 @@ public class MainActivity extends AppCompatActivity {
                 Move bestMove = position.selectBestMove(moves);
                 gameInfo = "AI made a move " + Position.printMove(bestMove);
                 position.executeMove(bestMove);
+                // Play notification sound
+                MediaPlayer mediaPlayer = new MediaPlayer();
+                try {
+                    mediaPlayer.setDataSource(getApplicationContext(), RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION));
+                    mediaPlayer.setAudioStreamType(AudioManager.STREAM_NOTIFICATION);
+                    mediaPlayer.prepare();
+                    mediaPlayer.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
+                        @Override
+                        public void onCompletion(MediaPlayer mp) {
+                            mp.release();
+                        }
+                    });
+                    mediaPlayer.start();
+                } catch (IllegalArgumentException e) {
+                } catch (SecurityException e) {
+                } catch (IllegalStateException e) {
+                } catch (IOException e) {
+                }
                 moved = true;
             }
 
