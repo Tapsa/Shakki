@@ -2,6 +2,8 @@
     <string name="app_name">Chess by Tapsa</string>
     <string name="action_new_game">New game</string>
     <string name="action_moves2">AI thinks 2 moves forward</string>
+    <string name="action_moves3">AI thinks 3 moves forward</string>
     <string name="action_moves4">AI thinks 4 moves forward</string>
+    <string name="action_moves5">AI thinks 5 moves forward</string>
     <string name="action_moves6">AI thinks 6 moves forward</string>
 </resources>
