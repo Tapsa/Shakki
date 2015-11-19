@@ -25,7 +25,7 @@ public class Position {
     // For en passant move.
     private Piece passer;
     private int movesDone, lastEatMove;
-    public static int levelOfAI = 3;
+    public static int levelOfAI = 2;
 
     // Kertoimet
     private final static int c1 = 20, c2 = 10, c4 = 1, c5 = 7;

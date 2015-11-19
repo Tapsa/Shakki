@@ -13,13 +13,23 @@
         android:title="@string/action_moves2"
         app:showAsAction="never" />
     <item
-        android:id="@+id/action_moves4"
+        android:id="@+id/action_moves3"
         android:orderInCategory="3"
+        android:title="@string/action_moves3"
+        app:showAsAction="never" />
+    <item
+        android:id="@+id/action_moves4"
+        android:orderInCategory="4"
         android:title="@string/action_moves4"
         app:showAsAction="never" />
     <item
+        android:id="@+id/action_moves5"
+        android:orderInCategory="5"
+        android:title="@string/action_moves5"
+        app:showAsAction="never" />
+    <item
         android:id="@+id/action_moves6"
-        android:orderInCategory="4"
+        android:orderInCategory="6"
         android:title="@string/action_moves6"
         app:showAsAction="never" />
 </menu>

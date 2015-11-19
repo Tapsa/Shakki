@@ -363,9 +363,17 @@ public class MainActivity extends AppCompatActivity {
                 Position.levelOfAI = 1;
                 Toast.makeText(context, "AI now thinks 2 moves ahead", duration).show();
                 return true;
+            case R.id.action_moves3:
+                Position.levelOfAI = 2;
+                Toast.makeText(context, "AI now thinks 3 moves ahead", duration).show();
+                return true;
             case R.id.action_moves4:
                 Position.levelOfAI = 3;
                 Toast.makeText(context, "AI now thinks 4 moves ahead", duration).show();
+                return true;
+            case R.id.action_moves5:
+                Position.levelOfAI = 4;
+                Toast.makeText(context, "AI now thinks 5 moves ahead", duration).show();
                 return true;
             case R.id.action_moves6:
                 Position.levelOfAI = 5;
