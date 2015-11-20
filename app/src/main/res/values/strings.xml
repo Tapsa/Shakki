@@ -6,4 +6,5 @@
     <string name="action_moves4">AI thinks 4 moves forward</string>
     <string name="action_moves5">AI thinks 5 moves forward</string>
     <string name="action_moves6">AI thinks 6 moves forward</string>
+    <string name="action_AIvsAI">Toggle AI playing for you</string>
 </resources>

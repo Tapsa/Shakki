@@ -32,4 +32,9 @@
         android:orderInCategory="6"
         android:title="@string/action_moves6"
         app:showAsAction="never" />
+    <item
+        android:id="@+id/action_AIvsAI"
+        android:orderInCategory="7"
+        android:title="@string/action_AIvsAI"
+        app:showAsAction="never" />
 </menu>

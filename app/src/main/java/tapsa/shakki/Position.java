@@ -1376,7 +1376,7 @@ public class Position {
         }
     }
 
-    private class MinMaxThread extends Thread {
+    private class MinMaxThread implements Runnable {
         Move move;
         TreeSet<MultimapWorkaround> values;
         int color;
@@ -1401,8 +1401,9 @@ public class Position {
         TreeSet<MultimapWorkaround> values = new TreeSet<MultimapWorkaround>();
         long time1 = System.currentTimeMillis();
         int color = (whoseTurn == Owner.WHITE) ? -1 : 1;
+        if (1 == whitePieces.size() && levelOfAI < 3) levelOfAI = 3;
         for (Move m : moves) {
-            MinMaxThread thread = new MinMaxThread(m, values, color);
+            Thread thread = new Thread(new MinMaxThread(m, values, color));
             thread.start();
             threads.add(thread);
         }

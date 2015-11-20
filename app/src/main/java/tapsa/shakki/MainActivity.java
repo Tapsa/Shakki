@@ -26,7 +26,6 @@ import java.util.List;
 public class MainActivity extends AppCompatActivity {
     Position position;
     boolean cheat = false, moreInfo = false;
-    GameThread gameThread = null;
     List<Move> moves;
     String gameInfo = "";
 
@@ -34,15 +33,12 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        FrameLayout layout = (FrameLayout) findViewById(R.id.frame001);
-        layout.addView(new DrawingView(this));
-        Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
-        setSupportActionBar(toolbar);
+        setSupportActionBar((Toolbar) findViewById(R.id.toolbar));
+        ((FrameLayout) findViewById(R.id.frame001)).addView(new DrawingView(this));
 
         position = new Position();
         position.start();
-        gameThread = new GameThread();
-        gameThread.start();
+        new Thread(new GameThread()).start();
     }
 
     class DrawingView extends SurfaceView implements SurfaceHolder.Callback {
@@ -330,8 +326,7 @@ public class MainActivity extends AppCompatActivity {
                 // Turn changes.
                 if (moved) {
                     position.changeTurn();
-                    gameThread = new GameThread();
-                    gameThread.start();
+                    new Thread(new GameThread()).start();
                 }
             }
             return false;
@@ -356,8 +351,7 @@ public class MainActivity extends AppCompatActivity {
             case R.id.action_new_game:
                 Toast.makeText(context, "Starting a new game", duration).show();
                 position.start();
-                gameThread = new GameThread();
-                gameThread.start();
+                new Thread(new GameThread()).start();
                 return true;
             case R.id.action_moves2:
                 Position.levelOfAI = 1;
@@ -379,12 +373,20 @@ public class MainActivity extends AppCompatActivity {
                 Position.levelOfAI = 5;
                 Toast.makeText(context, "AI now thinks 6 moves ahead", duration).show();
                 return true;
+            case R.id.action_AIvsAI:
+                cheat = !cheat;
+                if (cheat) {
+                    Toast.makeText(context, "AI will play your moves", duration).show();
+                } else {
+                    Toast.makeText(context, "Play your own moves", duration).show();
+                }
+                return true;
             default:
                 return super.onOptionsItemSelected(item);
         }
     }
 
-    class GameThread extends Thread {
+    class GameThread implements Runnable {
         public GameThread() {
         }
 
@@ -412,7 +414,7 @@ public class MainActivity extends AppCompatActivity {
             }
             System.out.println(position.showSpecialInfo());
 
-            if (Owner.BLACK == position.tellTurn()) {
+            if (Owner.BLACK == position.tellTurn() || cheat) {
                 Move bestMove = position.selectBestMove(moves);
                 gameInfo = "AI made a move " + Position.printMove(bestMove);
                 position.executeMove(bestMove);
@@ -441,8 +443,7 @@ public class MainActivity extends AppCompatActivity {
 
             if (moved) {
                 position.changeTurn();
-                gameThread = new GameThread();
-                gameThread.start();
+                new Thread(new GameThread()).start();
             }
         }
     }
