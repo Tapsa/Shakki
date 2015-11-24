@@ -1,5 +1,7 @@
 package tapsa.shakki;
 
+import android.content.res.Resources;
+
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
@@ -26,6 +28,7 @@ public class Position {
     private Piece passer;
     private int movesDone, lastEatMove;
     public static int levelOfAI = 2;
+    public static Resources translator;
 
     // Kertoimet
     private final static int c1 = 20, c2 = 10, c4 = 1, c5 = 7;
@@ -1395,7 +1398,7 @@ public class Position {
     public Move selectBestMove(List<Move> moves) {
         negamaxed = 0;
         int movesAt0 = moves.size();
-        negamaxTotal = movesAt0 * movesAt0 * movesAt0 * movesAt0;
+        negamaxTotal = (int) Math.pow(movesAt0, 1 + levelOfAI);
         System.out.println("AI negamax:");
         List<Thread> threads = new LinkedList<Thread>();
         TreeSet<MultimapWorkaround> values = new TreeSet<MultimapWorkaround>();
@@ -1421,32 +1424,32 @@ public class Position {
             String line = "";
             switch (board[mw.move.fromRow][mw.move.fromCol].who) {
                 case KING:
-                    line = "King ";
+                    line = translator.getString(R.string.king);
                     break;
                 case QUEEN:
-                    line = "Queen ";
+                    line = translator.getString(R.string.queen);
                     break;
                 case ROOK:
-                    line = "Rook ";
+                    line = translator.getString(R.string.rook);
                     break;
                 case BISHOP:
-                    line = "Bishop ";
+                    line = translator.getString(R.string.bishop);
                     break;
                 case KNIGHT:
-                    line = "Knight ";
+                    line = translator.getString(R.string.knight);
                     break;
                 case PAWN:
-                    line = "Pawn ";
+                    line = translator.getString(R.string.pawn);
                     break;
             }
-            line += Position.printFile(mw.move.fromCol) + Position.printRank(mw.move.fromRow) + "-" +
-                    Position.printFile(mw.move.toCol) + Position.printRank(mw.move.toRow);
+            line += " " + Position.printFile(mw.move.fromCol) + Position.printRank(mw.move.fromRow) +
+                    "-" + Position.printFile(mw.move.toCol) + Position.printRank(mw.move.toRow);
             System.out.printf("%s : %d%n", line, mw.value);
         }
 
         long time2 = System.currentTimeMillis();
         System.out.println("Negamax used " + negamaxed + " times");
-        System.out.println("Time elapsed: " + (time2 - time1) + " ms");
+        System.out.printf("%s: %d ms%n", translator.getString(R.string.time_elapsed), time2 - time1);
         ArrayList<Move> sameValues = new ArrayList<Move>();
         Random rand = new Random();
         rand.setSeed(time2);

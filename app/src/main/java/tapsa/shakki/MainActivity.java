@@ -24,21 +24,45 @@ import java.util.LinkedList;
 import java.util.List;
 
 public class MainActivity extends AppCompatActivity {
-    Position position;
-    boolean cheat = false, moreInfo = false;
-    List<Move> moves;
-    String gameInfo = "";
+    private Position position;
+    private List<Move> moves;
+    private boolean cheat = false, moreInfo = false, playing = false, waiter = false;
+    private String gameInfo = "", gameInfo2 = "";
+    private DrawingView drawingView;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         setSupportActionBar((Toolbar) findViewById(R.id.toolbar));
-        ((FrameLayout) findViewById(R.id.frame001)).addView(new DrawingView(this));
+        drawingView = new DrawingView(this);
+        ((FrameLayout) findViewById(R.id.frame001)).addView(drawingView);
 
         position = new Position();
+        position.translator = getApplicationContext().getResources();
         position.start();
+        playing = true;
         new Thread(new GameThread()).start();
+    }
+
+    @Override
+    protected void onRestart() {
+        super.onRestart();
+        playing = true;
+        if (waiter) new Thread(new GameThread()).start();
+    }
+
+    @Override
+    protected void onStart() {
+        super.onStart();
+        drawingView.startGraphics();
+    }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+        playing = false;
+        drawingView.stopGraphics();
     }
 
     class DrawingView extends SurfaceView implements SurfaceHolder.Callback {
@@ -49,7 +73,7 @@ public class MainActivity extends AppCompatActivity {
         private int fromCol = 0xF, fromRow, toCol, toRow, touchShowTime;
         private int[] lines;
         private DrawerThread thread = null;
-        private String message = "";
+        private String message = "", message2 = "";
         private float touchX, touchY;
 
         public DrawingView(Context context) {
@@ -88,7 +112,7 @@ public class MainActivity extends AppCompatActivity {
 
         @Override
         public void surfaceCreated(SurfaceHolder holder) {
-            startGraphics();
+            //startGraphics();
         }
 
         @Override
@@ -248,14 +272,16 @@ public class MainActivity extends AppCompatActivity {
             paint.setColor(Color.RED);
             String turnText;
             if (Owner.BLACK == position.tellTurn()) {
-                turnText = "AI's turn ~" + Position.completion() + " %";
-            } else turnText = "Your turn";
+                turnText = getString(R.string.ais_turn) + " ~" + Position.completion() + " %";
+            } else turnText = getString(R.string.your_turn);
             canvas.drawText(turnText, 10, lines[0], paint);
             if (moreInfo) {
                 message = gameInfo;
+                message2 = gameInfo2;
                 moreInfo = false;
             }
             canvas.drawText(message, 10, boardSide * 1.25f, paint);
+            canvas.drawText(message2, 10, boardSide * 1.35f, paint);
 
             // Paint the pieces
             Piece[][] board = position.getBoard();
@@ -314,14 +340,14 @@ public class MainActivity extends AppCompatActivity {
                                 }
                             }
                             if (!legal) {
-                                message = "Illegal move!";
+                                message = getString(R.string.illegal_move);
                             } else fromCol = 0xF;
                         }
                     } else {
-                        message = "Make a move like e2-e4";
+                        message = getString(R.string.example_move);
                         fromCol = 0xF;
                     }
-                } else message = "AI is thinking";
+                } else message = getString(R.string.ai_is_thinking);
 
                 // Turn changes.
                 if (moved) {
@@ -349,36 +375,37 @@ public class MainActivity extends AppCompatActivity {
         int duration = Toast.LENGTH_SHORT;
         switch (item.getItemId()) {
             case R.id.action_new_game:
-                Toast.makeText(context, "Starting a new game", duration).show();
+                Toast.makeText(context, getString(R.string.starting_new_game), duration).show();
                 position.start();
                 new Thread(new GameThread()).start();
                 return true;
             case R.id.action_moves2:
                 Position.levelOfAI = 1;
-                Toast.makeText(context, "AI now thinks 2 moves ahead", duration).show();
+                Toast.makeText(context, getString(R.string.ai_thinks_2_moves), duration).show();
                 return true;
             case R.id.action_moves3:
                 Position.levelOfAI = 2;
-                Toast.makeText(context, "AI now thinks 3 moves ahead", duration).show();
+                Toast.makeText(context, getString(R.string.ai_thinks_3_moves), duration).show();
                 return true;
             case R.id.action_moves4:
                 Position.levelOfAI = 3;
-                Toast.makeText(context, "AI now thinks 4 moves ahead", duration).show();
+                Toast.makeText(context, getString(R.string.ai_thinks_4_moves), duration).show();
                 return true;
             case R.id.action_moves5:
                 Position.levelOfAI = 4;
-                Toast.makeText(context, "AI now thinks 5 moves ahead", duration).show();
+                Toast.makeText(context, getString(R.string.ai_thinks_5_moves), duration).show();
                 return true;
             case R.id.action_moves6:
                 Position.levelOfAI = 5;
-                Toast.makeText(context, "AI now thinks 6 moves ahead", duration).show();
+                Toast.makeText(context, getString(R.string.ai_thinks_6_moves), duration).show();
                 return true;
             case R.id.action_AIvsAI:
                 cheat = !cheat;
+                item.setChecked(cheat);
                 if (cheat) {
-                    Toast.makeText(context, "AI will play your moves", duration).show();
+                    Toast.makeText(context, getString(R.string.ai_plays_for_you), duration).show();
                 } else {
-                    Toast.makeText(context, "Play your own moves", duration).show();
+                    Toast.makeText(context, getString(R.string.play_yourself), duration).show();
                 }
                 return true;
             default:
@@ -393,22 +420,23 @@ public class MainActivity extends AppCompatActivity {
         public void run() {
             boolean moved = false;
             if (position.isDraw()) {
-                gameInfo = "DRAW";
+                gameInfo = getString(R.string.draw);
                 moreInfo = true;
                 return;
             }
             moves = new LinkedList<Move>();
             List<Piece> threats = new LinkedList<Piece>();
-            System.out.println("Legal moves: " + position.generateLegalMoves(moves, threats));
+            System.out.println(getString(R.string.legal_moves) + ": " + position.generateLegalMoves(moves, threats));
             if (!threats.isEmpty()) {
-                gameInfo = "Check!";
+                gameInfo = getString(R.string.check);
                 for (Piece t : threats) {
                     gameInfo += "  @ " + Position.printFile(t.col.ordinal())
                             + Position.printRank(t.row.ordinal());
                 }
             }
             if (moves.isEmpty()) {
-                gameInfo = "GAME ENDED";
+                gameInfo = getString(R.string.game_ended);
+                gameInfo2 = getString(Owner.BLACK == position.tellTurn() ? R.string.you_won : R.string.ai_won);
                 moreInfo = true;
                 return;
             }
@@ -416,7 +444,7 @@ public class MainActivity extends AppCompatActivity {
 
             if (Owner.BLACK == position.tellTurn() || cheat) {
                 Move bestMove = position.selectBestMove(moves);
-                gameInfo = "AI made a move " + Position.printMove(bestMove);
+                gameInfo = getString(R.string.ai_made_move) + " " + Position.printMove(bestMove);
                 position.executeMove(bestMove);
                 // Play notification sound
                 MediaPlayer mediaPlayer = new MediaPlayer();
@@ -431,10 +459,7 @@ public class MainActivity extends AppCompatActivity {
                         }
                     });
                     mediaPlayer.start();
-                } catch (IllegalArgumentException e) {
-                } catch (SecurityException e) {
-                } catch (IllegalStateException e) {
-                } catch (IOException e) {
+                } catch (IllegalArgumentException | SecurityException | IOException | IllegalStateException ignored) {
                 }
                 moved = true;
             }
@@ -443,7 +468,8 @@ public class MainActivity extends AppCompatActivity {
 
             if (moved) {
                 position.changeTurn();
-                new Thread(new GameThread()).start();
+                if (playing) new Thread(new GameThread()).start();
+                else waiter = true;
             }
         }
     }
