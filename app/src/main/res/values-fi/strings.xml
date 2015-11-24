@@ -1,0 +1,37 @@
+<resources>
+    <string name="app_name">Tapsan šakki</string>
+    <string name="action_new_game">Uusi peli</string>
+    <string name="action_moves2">Tekoäly miettii 2 vuoroa</string>
+    <string name="action_moves3">Tekoäly miettii 3 vuoroa</string>
+    <string name="action_moves4">Tekoäly miettii 4 vuoroa</string>
+    <string name="action_moves5">Tekoäly miettii 5 vuoroa</string>
+    <string name="action_moves6">Tekoäly miettii 6 vuoroa</string>
+    <string name="action_AIvsAI">Anna tekoälyn pelata siirtosi</string>
+    <string name="king">Kuningas</string>
+    <string name="queen">Kuningatar</string>
+    <string name="rook">Torni</string>
+    <string name="bishop">Lähetti</string>
+    <string name="knight">Ratsu</string>
+    <string name="pawn">Sotilas</string>
+    <string name="time_elapsed">Aikaa kului</string>
+    <string name="ais_turn">Tekoälyn vuoro</string>
+    <string name="your_turn">Vuorosi</string>
+    <string name="illegal_move">Laiton siirto!</string>
+    <string name="example_move">Tee siirto kuten e2-e4</string>
+    <string name="ai_is_thinking">Tekoäly miettii</string>
+    <string name="starting_new_game">Uusi peli alkaa</string>
+    <string name="ai_thinks_2_moves">Nyt tekoäly miettii 2 vuoroa</string>
+    <string name="ai_thinks_3_moves">Nyt tekoäly miettii 3 vuoroa</string>
+    <string name="ai_thinks_4_moves">Nyt tekoäly miettii 4 vuoroa</string>
+    <string name="ai_thinks_5_moves">Nyt tekoäly miettii 5 vuoroa</string>
+    <string name="ai_thinks_6_moves">Nyt tekoäly miettii 6 vuoroa</string>
+    <string name="ai_plays_for_you">Tekoäly pelaa siirtosi</string>
+    <string name="play_yourself">Pelaat itse siirtosi</string>
+    <string name="draw">TASAPELI</string>
+    <string name="legal_moves">Lailliset siirrot</string>
+    <string name="check">Šakki!</string>
+    <string name="game_ended">PELI PÄÄTTYI</string>
+    <string name="ai_made_move">Tekoäly teki siirron</string>
+    <string name="you_won">Voitit</string>
+    <string name="ai_won">Musta voitti</string>
+</resources>
