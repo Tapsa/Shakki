@@ -293,12 +293,8 @@ public class MainActivity extends AppCompatActivity {
             for (int row = 0; row < 8; ++row) {
                 for (int col = 0; col < 8; ++col) {
                     if (null != board[row][col]) {
-                        if (board[row][col].owner == Owner.BLACK)
-                            paint.setColor(Color.BLACK);
-                        else
-                            paint.setColor(Color.BLUE);
                         int imgrow = row - 7;
-                        canvas.drawText(board[row][col].debugPrint(), boardSide * ((col * 0.1f + 0.03f) + 0.1f), boardSide * ((-imgrow * 0.1f + 0.025f) + 0.3f), paint);
+                        canvas.drawText(board[row][col].debugPrint(), boardSide * (col * 0.1f + 0.103f), boardSide * (-imgrow * 0.1f + 0.325f), paint);
                     }
                 }
             }
