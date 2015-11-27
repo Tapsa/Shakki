@@ -53,16 +53,21 @@ public class MainActivity extends AppCompatActivity {
     }
 
     @Override
-    protected void onStart() {
-        super.onStart();
+    protected void onResume() {
+        super.onResume();
         drawingView.startGraphics();
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        drawingView.stopGraphics();
     }
 
     @Override
     protected void onStop() {
         super.onStop();
         playing = false;
-        drawingView.stopGraphics();
     }
 
     class DrawingView extends SurfaceView implements SurfaceHolder.Callback {
