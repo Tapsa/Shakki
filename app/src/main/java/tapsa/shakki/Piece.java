@@ -25,19 +25,37 @@ public class Piece {
     }
 
     String debugPrint() {
-        switch (who) {
-            case KING:
-                return "K";
-            case QUEEN:
-                return "Q";
-            case ROOK:
-                return "R";
-            case BISHOP:
-                return "B";
-            case KNIGHT:
-                return "N";
-            case PAWN:
-                return "P";
+        switch (owner) {
+            case BLACK:
+                switch (who) {
+                    case KING:
+                        return "♚";
+                    case QUEEN:
+                        return "♛";
+                    case ROOK:
+                        return "♜";
+                    case BISHOP:
+                        return "♝";
+                    case KNIGHT:
+                        return "♞";
+                    case PAWN:
+                        return "♟";
+                }
+            case WHITE:
+                switch (who) {
+                    case KING:
+                        return "♔";
+                    case QUEEN:
+                        return "♕";
+                    case ROOK:
+                        return "♖";
+                    case BISHOP:
+                        return "♗";
+                    case KNIGHT:
+                        return "♘";
+                    case PAWN:
+                        return "♙";
+                }
             default:
                 return " ";
         }
