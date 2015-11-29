@@ -201,9 +201,9 @@ public class MainActivity extends AppCompatActivity {
                 boardBitmap = Bitmap.createBitmap(canvas.getWidth(), canvas.getHeight(), Bitmap.Config.ARGB_8888);
                 Canvas background = new Canvas(boardBitmap);
                 background.drawColor(Color.BLACK);
-                paint.setColor(Color.YELLOW);
+                paint.setColor(Color.rgb(233, 215, 0));
                 background.drawRect(lines[0], lines[9], lines[8], lines[17], paint);
-                paint.setColor(Color.rgb(128, 128, 0));
+                paint.setColor(Color.rgb(191, 155, 0));
                 background.drawRect(lines[1], lines[9], lines[2], lines[10], paint);
                 background.drawRect(lines[3], lines[9], lines[4], lines[10], paint);
                 background.drawRect(lines[5], lines[9], lines[6], lines[10], paint);
