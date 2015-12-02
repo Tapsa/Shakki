@@ -196,6 +196,7 @@ public class MainActivity extends AppCompatActivity {
         }
 
         protected void updateBoard(Canvas canvas) {
+            paint.setTextAlign(Paint.Align.LEFT);
             // Paint the chess board
             if (null == boardBitmap) {
                 boardBitmap = Bitmap.createBitmap(canvas.getWidth(), canvas.getHeight(), Bitmap.Config.ARGB_8888);
@@ -290,11 +291,13 @@ public class MainActivity extends AppCompatActivity {
 
             // Paint the pieces
             Piece[][] board = position.getBoard();
+            paint.setTextAlign(Paint.Align.CENTER);
             for (int row = 0; row < 8; ++row) {
                 for (int col = 0; col < 8; ++col) {
                     if (null != board[row][col]) {
+                        paint.setColor(Owner.BLACK == board[row][col].owner ? Color.BLACK : Color.BLUE);
                         int imgrow = row - 7;
-                        canvas.drawText(board[row][col].debugPrint(), boardSide * (col * 0.1f + 0.103f), boardSide * (-imgrow * 0.1f + 0.325f), paint);
+                        canvas.drawText(board[row][col].debugPrint(), boardSide * (col * 0.1f + 0.15f), boardSide * (-imgrow * 0.1f + 0.325f), paint);
                     }
                 }
             }
