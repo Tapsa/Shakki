@@ -1590,6 +1590,10 @@ public class Position {
         return board;
     }
 
+    public boolean isMyPiece(int file, int rank) {
+        return null != board[rank][file] && board[rank][file].owner == whoseTurn;
+    }
+
     public static String printFile(int file) {
         switch (file) {
             case 0:
