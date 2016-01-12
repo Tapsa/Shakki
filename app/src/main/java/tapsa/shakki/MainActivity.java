@@ -28,7 +28,7 @@ public class MainActivity extends AppCompatActivity {
     private List<Move> moves;
     private List<Piece> threats;
     private boolean cheat = false, moreInfo = false, playing = false, waiter = false;
-    private String gameInfo = "", gameInfo2 = "";
+    private String gameInfo = "", gameInfo2 = "", capturedWhite = "", capturedBlack = "";
     private Move bestMove = null;
     private DrawingView drawingView;
 
@@ -339,6 +339,11 @@ public class MainActivity extends AppCompatActivity {
                     }
                 }
             }
+            // Paint last captured pieces
+            paint.setColor(colorWhitePiece);
+            canvas.drawText(capturedWhite, boardSide * 0.05f, boardSide * 0.225f, paint);
+            paint.setColor(colorBlackPiece);
+            canvas.drawText(capturedBlack, boardSide * 0.05f, boardSide * 1.125f, paint);
             // Paint the touch point
             if (0 < --touchShowTime) {
                 paint.setColor(colorTouchPoint);
@@ -376,7 +381,7 @@ public class MainActivity extends AppCompatActivity {
                                     legal = true;
                                     m.AI = false;
                                     System.out.println("You made a move");
-                                    position.executeMove(m);
+                                    capturedBlack = position.executeMoveSaveVictim(m) ? position.victim.debugPrint() : "";
                                     moved = true;
                                     break;
                                 }
@@ -418,6 +423,7 @@ public class MainActivity extends AppCompatActivity {
         switch (item.getItemId()) {
             case R.id.action_new_game:
                 Toast.makeText(context, getString(R.string.starting_new_game), duration).show();
+                gameInfo2 = "";
                 position.start();
                 new Thread(new GameThread()).start();
                 return true;
@@ -487,7 +493,7 @@ public class MainActivity extends AppCompatActivity {
             if (Owner.BLACK == position.tellTurn() || cheat) {
                 bestMove = position.selectBestMove(moves);
                 gameInfo = getString(R.string.ai_made_move) + " " + Position.printMove(bestMove);
-                position.executeMove(bestMove);
+                capturedWhite = position.executeMoveSaveVictim(bestMove) ? position.victim.debugPrint() : "";
                 // Play notification sound
                 MediaPlayer mediaPlayer = new MediaPlayer();
                 try {

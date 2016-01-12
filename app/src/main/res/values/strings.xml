@@ -31,7 +31,7 @@
     <string name="legal_moves">Legal moves</string>
     <string name="check">Check!</string>
     <string name="game_ended">GAME ENDED</string>
-    <string name="ai_made_move">AI made a move</string>
+    <string name="ai_made_move">AI moved</string>
     <string name="you_won">You won</string>
     <string name="ai_won">Black won</string>
 </resources>
