@@ -31,7 +31,7 @@
     <string name="legal_moves">Lailliset siirrot</string>
     <string name="check">Šakki!</string>
     <string name="game_ended">PELI PÄÄTTYI</string>
-    <string name="ai_made_move">Tekoäly teki siirron</string>
+    <string name="ai_made_move">Tekoäly siirsi</string>
     <string name="you_won">Voitit</string>
     <string name="ai_won">Musta voitti</string>
 </resources>

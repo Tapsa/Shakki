@@ -26,6 +26,7 @@ public class Position {
     private short canCastle;
     // For en passant move.
     private Piece passer;
+    public Piece victim = null;
     private int movesDone, lastEatMove;
     public static int levelOfAI = 2;
     public static Resources translator;
@@ -1499,7 +1500,13 @@ public class Position {
         }
     }
 
-    public void executeMove(Move m) {
+    public boolean executeMoveSaveVictim(Move m) {
+        victim = board[m.toRow][m.toCol];
+        executeMove(m);
+        return null != victim;
+    }
+
+    private void executeMove(Move m) {
         Piece to = board[m.toRow][m.toCol];
         if (null != to) {
             // Delete eatable chess piece.
