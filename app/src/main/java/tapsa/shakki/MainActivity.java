@@ -26,9 +26,22 @@ import java.util.List;
 public class MainActivity extends AppCompatActivity {
     private Position position;
     private List<Move> moves;
+    private List<Piece> threats;
     private boolean cheat = false, moreInfo = false, playing = false, waiter = false;
     private String gameInfo = "", gameInfo2 = "";
+    private Move bestMove = null;
     private DrawingView drawingView;
+
+    static int colorBackGround = Color.rgb(178, 174, 160);// BLACK
+    static int colorBoardLight = Color.rgb(235, 195, 139);// 233, 215, 0
+    static int colorBoardDark = Color.rgb(180, 122, 81);// 191, 155, 0
+    static int colorBoardLabel = Color.rgb(131, 79, 48);// 192
+    static int colorMessage = Color.rgb(25, 25, 21);// RED
+    static int colorTouchPoint = Color.rgb(200, 10, 21);
+    static int colorBlackPiece = Color.rgb(22, 20, 15);// BLACK
+    static int colorWhitePiece = Color.rgb(68, 87, 194);// WHITE
+    static int colorLastMove = colorBoardLabel;
+    static int colorThreat = colorMessage;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -39,7 +52,7 @@ public class MainActivity extends AppCompatActivity {
         ((FrameLayout) findViewById(R.id.frame001)).addView(drawingView);
 
         position = new Position();
-        position.translator = getApplicationContext().getResources();
+        Position.translator = getApplicationContext().getResources();
         position.start();
         playing = true;
         new Thread(new GameThread()).start();
@@ -103,7 +116,7 @@ public class MainActivity extends AppCompatActivity {
                     try {
                         thread.join();
                         alive = false;
-                    } catch (InterruptedException e) {
+                    } catch (InterruptedException ignored) {
                     }
                 }
                 thread = null;
@@ -185,7 +198,7 @@ public class MainActivity extends AppCompatActivity {
                             }
                         }
                         sleep(300);
-                    } catch (InterruptedException ie) {
+                    } catch (InterruptedException ignored) {
                     } finally {
                         if (null != canvas) {
                             surfaceHolder.unlockCanvasAndPost(canvas);
@@ -201,44 +214,49 @@ public class MainActivity extends AppCompatActivity {
             if (null == boardBitmap) {
                 boardBitmap = Bitmap.createBitmap(canvas.getWidth(), canvas.getHeight(), Bitmap.Config.ARGB_8888);
                 Canvas background = new Canvas(boardBitmap);
-                background.drawColor(Color.BLACK);
-                paint.setColor(Color.rgb(233, 215, 0));
+                background.drawColor(colorBackGround);
+                paint.setColor(colorBoardDark);
+                background.drawRect(0, 0.15f * boardSide, boardSide, boardSide * 1.15f, paint);
+                paint.setColor(colorBoardLight);
+                background.drawRect(lines[0], lines[9], lines[1], lines[10], paint);
+                background.drawRect(lines[2], lines[9], lines[3], lines[10], paint);
+                background.drawRect(lines[4], lines[9], lines[5], lines[10], paint);
+                background.drawRect(lines[6], lines[9], lines[7], lines[10], paint);
+                background.drawRect(lines[1], lines[10], lines[2], lines[11], paint);
+                background.drawRect(lines[3], lines[10], lines[4], lines[11], paint);
+                background.drawRect(lines[5], lines[10], lines[6], lines[11], paint);
+                background.drawRect(lines[7], lines[10], lines[8], lines[11], paint);
+                background.drawRect(lines[0], lines[11], lines[1], lines[12], paint);
+                background.drawRect(lines[2], lines[11], lines[3], lines[12], paint);
+                background.drawRect(lines[4], lines[11], lines[5], lines[12], paint);
+                background.drawRect(lines[6], lines[11], lines[7], lines[12], paint);
+                background.drawRect(lines[1], lines[12], lines[2], lines[13], paint);
+                background.drawRect(lines[3], lines[12], lines[4], lines[13], paint);
+                background.drawRect(lines[5], lines[12], lines[6], lines[13], paint);
+                background.drawRect(lines[7], lines[12], lines[8], lines[13], paint);
+                background.drawRect(lines[0], lines[13], lines[1], lines[14], paint);
+                background.drawRect(lines[2], lines[13], lines[3], lines[14], paint);
+                background.drawRect(lines[4], lines[13], lines[5], lines[14], paint);
+                background.drawRect(lines[6], lines[13], lines[7], lines[14], paint);
+                background.drawRect(lines[1], lines[14], lines[2], lines[15], paint);
+                background.drawRect(lines[3], lines[14], lines[4], lines[15], paint);
+                background.drawRect(lines[5], lines[14], lines[6], lines[15], paint);
+                background.drawRect(lines[7], lines[14], lines[8], lines[15], paint);
+                background.drawRect(lines[0], lines[15], lines[1], lines[16], paint);
+                background.drawRect(lines[2], lines[15], lines[3], lines[16], paint);
+                background.drawRect(lines[4], lines[15], lines[5], lines[16], paint);
+                background.drawRect(lines[6], lines[15], lines[7], lines[16], paint);
+                background.drawRect(lines[1], lines[16], lines[2], lines[17], paint);
+                background.drawRect(lines[3], lines[16], lines[4], lines[17], paint);
+                background.drawRect(lines[5], lines[16], lines[6], lines[17], paint);
+                background.drawRect(lines[7], lines[16], lines[8], lines[17], paint);
+                paint.setStyle(Paint.Style.STROKE);
+                paint.setStrokeWidth(boardSide * 0.005f);
+                paint.setColor(colorBlackPiece);
                 background.drawRect(lines[0], lines[9], lines[8], lines[17], paint);
-                paint.setColor(Color.rgb(191, 155, 0));
-                background.drawRect(lines[1], lines[9], lines[2], lines[10], paint);
-                background.drawRect(lines[3], lines[9], lines[4], lines[10], paint);
-                background.drawRect(lines[5], lines[9], lines[6], lines[10], paint);
-                background.drawRect(lines[7], lines[9], lines[8], lines[10], paint);
-                background.drawRect(lines[0], lines[10], lines[1], lines[11], paint);
-                background.drawRect(lines[2], lines[10], lines[3], lines[11], paint);
-                background.drawRect(lines[4], lines[10], lines[5], lines[11], paint);
-                background.drawRect(lines[6], lines[10], lines[7], lines[11], paint);
-                background.drawRect(lines[1], lines[11], lines[2], lines[12], paint);
-                background.drawRect(lines[3], lines[11], lines[4], lines[12], paint);
-                background.drawRect(lines[5], lines[11], lines[6], lines[12], paint);
-                background.drawRect(lines[7], lines[11], lines[8], lines[12], paint);
-                background.drawRect(lines[0], lines[12], lines[1], lines[13], paint);
-                background.drawRect(lines[2], lines[12], lines[3], lines[13], paint);
-                background.drawRect(lines[4], lines[12], lines[5], lines[13], paint);
-                background.drawRect(lines[6], lines[12], lines[7], lines[13], paint);
-                background.drawRect(lines[1], lines[13], lines[2], lines[14], paint);
-                background.drawRect(lines[3], lines[13], lines[4], lines[14], paint);
-                background.drawRect(lines[5], lines[13], lines[6], lines[14], paint);
-                background.drawRect(lines[7], lines[13], lines[8], lines[14], paint);
-                background.drawRect(lines[0], lines[14], lines[1], lines[15], paint);
-                background.drawRect(lines[2], lines[14], lines[3], lines[15], paint);
-                background.drawRect(lines[4], lines[14], lines[5], lines[15], paint);
-                background.drawRect(lines[6], lines[14], lines[7], lines[15], paint);
-                background.drawRect(lines[1], lines[15], lines[2], lines[16], paint);
-                background.drawRect(lines[3], lines[15], lines[4], lines[16], paint);
-                background.drawRect(lines[5], lines[15], lines[6], lines[16], paint);
-                background.drawRect(lines[7], lines[15], lines[8], lines[16], paint);
-                background.drawRect(lines[0], lines[16], lines[1], lines[17], paint);
-                background.drawRect(lines[2], lines[16], lines[3], lines[17], paint);
-                background.drawRect(lines[4], lines[16], lines[5], lines[17], paint);
-                background.drawRect(lines[6], lines[16], lines[7], lines[17], paint);
+                paint.setStyle(Paint.Style.FILL);
 
-                paint.setColor(Color.rgb(192, 192, 192));
+                paint.setColor(colorBoardLabel);
                 background.drawText("a", boardSide * 0.13f, lines[20], paint);
                 background.drawText("b", boardSide * 0.23f, lines[20], paint);
                 background.drawText("c", boardSide * 0.33f, lines[20], paint);
@@ -274,8 +292,28 @@ public class MainActivity extends AppCompatActivity {
             }
             canvas.drawBitmap(boardBitmap, 0, 0, paint);
 
+            // Highlight last move
+            if (null != bestMove) {
+                int r2 = 7 - bestMove.toRow;
+                int c2 = bestMove.toCol;
+                int r1 = 7 - bestMove.fromRow;
+                int c1 = bestMove.fromCol;
+                paint.setStyle(Paint.Style.STROKE);
+                paint.setColor(colorLastMove);
+                canvas.drawRect(lines[c2], lines[r2 + 9], lines[c2 + 1], lines[r2 + 10], paint);
+                canvas.drawRect(lines[c1], lines[r1 + 9], lines[c1 + 1], lines[r1 + 10], paint);
+
+                for (Piece t : threats) {
+                    int r3 = 7 - t.row.ordinal();
+                    int c3 = t.col.ordinal();
+                    paint.setColor(colorThreat);
+                    canvas.drawRect(lines[c3], lines[r3 + 9], lines[c3 + 1], lines[r3 + 10], paint);
+                }
+                paint.setStyle(Paint.Style.FILL);
+            }
+
             // Paint messages
-            paint.setColor(Color.RED);
+            paint.setColor(colorMessage);
             String turnText;
             if (Owner.BLACK == position.tellTurn()) {
                 turnText = getString(R.string.ais_turn) + " ~" + Position.completion() + " %";
@@ -295,7 +333,7 @@ public class MainActivity extends AppCompatActivity {
             for (int row = 0; row < 8; ++row) {
                 for (int col = 0; col < 8; ++col) {
                     if (null != board[row][col]) {
-                        paint.setColor(Owner.BLACK == board[row][col].owner ? Color.BLACK : Color.BLUE);
+                        paint.setColor(Owner.BLACK == board[row][col].owner ? colorBlackPiece : colorWhitePiece);
                         int imgrow = row - 7;
                         canvas.drawText(board[row][col].debugPrint(), boardSide * (col * 0.1f + 0.15f), boardSide * (-imgrow * 0.1f + 0.325f), paint);
                     }
@@ -303,7 +341,7 @@ public class MainActivity extends AppCompatActivity {
             }
             // Paint the touch point
             if (0 < --touchShowTime) {
-                paint.setColor(Color.RED);
+                paint.setColor(colorTouchPoint);
                 canvas.drawCircle(touchX, touchY, boardSide * 0.02f, paint);
             }
         }
@@ -320,7 +358,7 @@ public class MainActivity extends AppCompatActivity {
 
                 if (Owner.WHITE == position.tellTurn()) {
                     if (0 <= xfile && xfile < 8 && 0 <= yrank && yrank < 8) {
-                        if (fromCol == 0xF) {
+                        if (fromCol == 0xF || position.isMyPiece(xfile, yrank)) {
                             fromCol = xfile;
                             fromRow = yrank;
                             message = Position.printFile(fromCol) + Position.printRank(fromRow) + "-";
@@ -429,7 +467,7 @@ public class MainActivity extends AppCompatActivity {
                 return;
             }
             moves = new LinkedList<Move>();
-            List<Piece> threats = new LinkedList<Piece>();
+            threats = new LinkedList<Piece>();
             System.out.println(getString(R.string.legal_moves) + ": " + position.generateLegalMoves(moves, threats));
             if (!threats.isEmpty()) {
                 gameInfo = getString(R.string.check);
@@ -447,7 +485,7 @@ public class MainActivity extends AppCompatActivity {
             System.out.println(position.showSpecialInfo());
 
             if (Owner.BLACK == position.tellTurn() || cheat) {
-                Move bestMove = position.selectBestMove(moves);
+                bestMove = position.selectBestMove(moves);
                 gameInfo = getString(R.string.ai_made_move) + " " + Position.printMove(bestMove);
                 position.executeMove(bestMove);
                 // Play notification sound
