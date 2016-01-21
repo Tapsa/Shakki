@@ -40,8 +40,8 @@ public class MainActivity extends AppCompatActivity {
     static int colorTouchPoint = Color.rgb(200, 10, 21);
     static int colorBlackPiece = Color.rgb(22, 20, 15);// BLACK
     static int colorWhitePiece = Color.rgb(68, 87, 194);// WHITE
-    static int colorLastMove = colorBoardLabel;
-    static int colorThreat = colorMessage;
+    static int colorLastMove = colorMessage;
+    static int colorThreat = colorTouchPoint;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
